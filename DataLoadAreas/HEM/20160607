@@ -1,0 +1,68 @@
+-- Script Name = hdl_voids_err_in.sql
+---------------------------------------------------------------------- 
+--
+-- Script to insert HDL Error messages
+--
+--   Ver   DB Ver  Who    Date     Reason
+--   1.0   6.13.0  MJK    2015     Errors for Void Events Dataload only
+--   1.1  6.13.0  MOK     2016     Errors for Void Instances Dataload added
+------------------------------------------------------------------------------- 
+--
+--
+set serverout on size 1000000
+--
+DECLARE
+--
+PROCEDURE ins_err(p_err_refno NUMBER,p_err_text VARCHAR2) is
+--
+CURSOR c1 IS
+SELECT err_message
+FROM   errors
+WHERE  err_refno = p_err_refno
+AND    err_object_shortname = 'HDL';
+--
+l_err_message VARCHAR2(120);
+--
+BEGIN
+--
+l_err_message := NULL;
+--
+OPEN c1;
+FETCH c1 INTO l_err_message;
+CLOSE c1;
+--
+IF l_err_message IS NULL THEN
+  INSERT INTO errors 
+  (err_object_shortname,err_refno,err_message,err_type,err_popup)         
+  values('HDL',p_err_refno,         
+  p_err_text,        
+  'V','N');
+dbms_output.put_line('Error number '||p_err_refno||' inserted.');
+ELSIF
+   l_err_message != p_err_text       
+   THEN
+     UPDATE errors
+     SET    err_message = p_err_text    
+     WHERE  err_object_shortname = 'HDL'
+       AND   err_refno = p_err_refno;
+dbms_output.put_line('Error number '||p_err_refno||' updated.');
+END IF;
+--
+END ins_err;
+--
+--
+BEGIN
+--
+ins_err(30,'Property reference does not exist on PROPERTIES');
+ins_err(358,'No matching Void Group');
+ins_err(359,'No matching Void Status');
+ins_err(360,'No matching Void Class');
+ins_err(945,'Property is not void on date supplied');
+ins_err(946,'Event code does not exist on Event Types');
+ins_err(947,'Target Date must not be before Event Start Date');
+ins_err(948,'Sequence Number must be supplied');
+--
+END;
+
+/
+ 

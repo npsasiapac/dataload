@@ -1,0 +1,41 @@
+-- Indexes for Housing Advice Data load
+--
+-- ***********************************************************************
+--  DESCRIPTION:
+--
+--  CHANGE CONTROL
+--
+--  VERSION DB Vers   WHO  WHEN         WHY
+--
+--  1.0     5.15.0    VS   13-JAN-2009  Initial Creation.
+--  1.1     6.10      AJ   14-DEC-2015  Control comments section added
+--
+--
+--
+--***********************************************************************
+--
+--
+--
+DROP INDEX HOU.DL_PERF1 ;
+
+CREATE INDEX HOU.DL_PERF1 ON 
+  HOU.ADVICE_CASE_HOUSING_OPTIONS(ACHO_ALTERNATIVE_REFERENCE) NOLOGGING NOPARALLEL ;
+--
+--
+DROP INDEX HOU.DL_PAR_PERF1;
+
+CREATE INDEX HOU.DL_PAR_PERF1 ON 
+  PARTIES(par_org_short_name) NOLOGGING NOPARALLEL;
+--
+--
+DROP INDEX HOU.DL_REGA_PERF1;
+
+CREATE INDEX HOU.DL_REGA_PERF1 ON 
+   HOU.DL_HAD_REGISTERED_ADDRESSES(LREGA_LEGACY_REF, LREGA_ADRE_CODE, LREGA_DL_LOAD_STATUS) NOLOGGING NOPARALLEL;
+--
+--
+DROP INDEX HOU.DL_REGA_PERF2;
+
+CREATE INDEX HOU.DL_REGA_PERF2 ON 
+   HOU.DL_HAD_REGISTERED_ADDRESSES(LREGA_LEGACY_REF) NOLOGGING NOPARALLEL;
+

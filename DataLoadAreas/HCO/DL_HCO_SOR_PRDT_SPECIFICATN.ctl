@@ -1,0 +1,16 @@
+load data
+APPEND
+into table DL_HCO_SOR_PRDT_SPECIFICATN
+fields terminated by "," optionally enclosed by '"'
+trailing nullcols
+(LSPSN_DLB_BATCH_ID     CONSTANT "$BATCH_NO"
+,LSPSN_DL_SEQNO         RECNUM
+,LSPSN_DL_LOAD_STATUS   CONSTANT "L"
+,LSPSN_SOR_CODE         CHAR "rtrim(:LSPSN_SOR_CODE)"
+,LSPSN_START_DATE       DATE NULLIF LSPSN_START_DATE=blanks
+,LSPSN_END_DATE         DATE NULLIF LSPSN_END_DATE=blanks
+,LSPRO_PROD_CODE        CHAR "rtrim(:LSPRO_PROD_CODE)"
+,LSPRO_DEFAULT_QUANTITY CHAR "rtrim(:LSPRO_DEFAULT_QUANTITY)"
+,LSPRO_HRV_UOM_CODE     CHAR "rtrim(:LSPRO_HRV_UOM_CODE)"
+,LSPSN_REFNO            INTEGER EXTERNAL "spsn_refno_seq.nextval"
+) 

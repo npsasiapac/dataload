@@ -1,0 +1,67 @@
+-- *********************************************************************
+--
+-- Ver   DB     Who   Date         Why
+-- 1.00  6.13   AJ    12-APR-2018  Initial Creation WITH Change Control
+--                                 added LRAC_RES_IND
+--
+-- *********************************************************************
+--
+load data   
+APPEND                   
+into table DL_HRA_REVENUE_ACCOUNTS            
+fields terminated by "," optionally enclosed by '"'        
+trailing nullcols
+(
+LRAC_DLB_BATCH_ID CONSTANT "$batch_no",
+LRAC_DL_SEQNO RECNUM,
+LRAC_DL_LOAD_STATUS CONSTANT "L",                                  
+LRAC_PAY_REF CHAR "rtrim(:LRAC_PAY_REF)",                              
+LRAC_HRV_ATE_CODE CHAR "rtrim(:LRAC_HRV_ATE_CODE)",
+LRAC_CLASS_CODE CHAR "rtrim(:LRAC_CLASS_CODE)",
+LRAC_START_DATE DATE "DD-MON-YYYY" NULLIF lrac_start_date=BLANKS,
+LRAC_AUN_CODE CHAR "rtrim(:LRAC_AUN_CODE)",
+LRAC_TCY_ALT_REF CHAR "rtrim(:LRAC_TCY_ALT_REF)",
+LRAC_REPORT_PRO_REFNO CHAR "rtrim(:LRAC_REPORT_PRO_REFNO)",
+LRAC_HRV_ADE_CODE CHAR "rtrim(:LRAC_HRV_ADE_CODE)",
+LRAC_PAR_ALT_REF CHAR "rtrim(:LRAC_PAR_ALT_REF)",
+LRAC_CHECK_DIGIT CHAR "rtrim(:LRAC_CHECK_DIGIT)",
+LRAC_DEBIT_TO_DATE DATE "DD-MON-YYYY" NULLIF lrac_debit_to_date=BLANKS,
+LRAC_STATEMENT_TO_DATE DATE "DD-MON-YYYY" NULLIF lrac_statement_to_date=BLANKS,
+LRAC_STATEMENT_BAL CHAR "rtrim(:LRAC_STATEMENT_BAL)",
+LRAC_ALT_REF CHAR "rtrim(:LRAC_ALT_REF)",
+LRAC_END_DATE DATE "DD-MON-YYYY" NULLIF lrac_end_date=BLANKS, 
+LRAC_HB_CLAIM_NO CHAR "rtrim(:LRAC_HB_CLAIM_NO)",
+LRAC_REVIEW_DATE DATE "DD-MON-YYYY" NULLIF lrac_review_date=BLANKS, 
+LRAC_NEXT_BAL_DATE DATE "DD-MON-YYYY" NULLIF lrac_next_bal_date=BLANKS,
+LRAC_EPO_CODE CHAR "rtrim(:LRAC_EPO_CODE)",
+LRAC_RECOVERABLE_IND "rtrim(:LRAC_RECOVERABLE_IND)",
+LRAC_VAT_IND "rtrim(:LRAC_VAT_IND)",
+LRAC_DISPUTE_IND "rtrim(:LRAC_DISPUTE_IND)",
+LRAC_SUSPEND_STATEMENT_IND "rtrim(:LRAC_SUSPEND_STATEMENT_IND)",
+LRAC_PME_PMY_CODE CHAR "rtrim(:LRAC_PME_PMY_CODE)",
+LRAC_PME_START_DATE DATE "DD-MON-YYYY" NULLIF lrac_pme_start_date=BLANKS,
+LRAC_PME_HRV_PPC_CODE CHAR "rtrim(:LRAC_PME_HRV_PPC_CODE)",                        
+LRAC_PME_FIRST_DD_TAKEN_IND CHAR "rtrim(:LRAC_PME_FIRST_DD_TAKEN_IND)",                       
+LRAC_BDE_BANK_NAME CHAR "rtrim(:LRAC_BDE_BANK_NAME)",                           
+LRAC_BAD_ACCOUNT_NO CHAR "rtrim(:LRAC_BAD_ACCOUNT_NO)",                        
+LRAC_BAD_ACCOUNT_NAME CHAR "rtrim(:LRAC_BAD_ACCOUNT_NAME)",                          
+LRAC_BAD_SORT_CODE CHAR "rtrim(:LRAC_BAD_SORT_CODE)",                           
+LRAC_BDE_BRANCH_NAME CHAR "rtrim(:LRAC_BDE_BRANCH_NAME)",                          
+LRAC_BAD_START_DATE DATE "DD-MON-YYYY" NULLIF lrac_bad_start_date=BLANKS,
+LRAC_AUN_BAD_ACCOUNT_NO CHAR "rtrim(:LRAC_AUN_BAD_ACCOUNT_NO)",
+LRAC_PAR_ORG_IND CHAR "rtrim(:LRAC_PAR_ORG_IND)",
+LRAC_BAD_PAR_PER_ALT_REF CHAR "rtrim(:LRAC_BAD_PAR_PER_ALT_REF)",
+LRAC_PCT_AMOUNT CHAR "rtrim(:LRAC_PCT_AMOUNT)",
+LRAC_PCT_PERCENTAGE CHAR "rtrim(:LRAC_PCT_PERCENTAGE)",
+LRAC_BDE_BTY_CODE CHAR "rtrim(:LRAC_BDE_BTY_CODE)",  
+LRAC_DAY_DUE CHAR "rtrim(:LRAC_DAY_DUE)",
+LRAC_LAS_LEA_START_DATE   DATE "DD-MON-YYYY" NULLIF lrac_las_lea_start_date=BLANKS,
+LRAC_LAS_START_DATE      DATE "DD-MON-YYYY" NULLIF lrac_las_start_date=BLANKS,
+LRAC_LAS_LEA_PRO_PROPREF    "rtrim(:LRAC_LAS_LEA_PRO_PROPREF)",
+LRAC_BDE_BANK_NAME_MLANG CHAR "rtrim(:LRAC_BDE_BANK_NAME_MLANG)",                           
+LRAC_BDE_BRANCH_NAME_MLANG CHAR "rtrim(:LRAC_BDE_BRANCH_NAME_MLANG)",
+LRAC_RES_IND CHAR "rtrim(:LRAC_RES_IND)",
+LRAC_ACCNO INTEGER EXTERNAL "RAC_ACCNO_SEQ.NEXTVAL" )
+
+
+

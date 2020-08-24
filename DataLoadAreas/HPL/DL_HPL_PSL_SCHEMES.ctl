@@ -1,0 +1,39 @@
+-- *********************************************************************
+--
+-- Date          Ver  DB Ver  Name  Amendment(s)
+-- ----          ---  ------  ----  ------------
+-- 04-MAY-2017   1.0  6.15.0  MJK   Initial Creation.
+-- 23-MAY-2017   1.1  6.15    AJ    Bilingual code and description added
+-- *********************************************************************
+--
+load data
+infile $gri_datafile
+APPEND
+into table DL_HPL_PSL_SCHEMES
+fields terminated by "," optionally enclosed by '"'
+trailing nullcols
+(LPSLS_DLB_BATCH_ID             CONSTANT "$batch_no"
+,LPSLS_DL_SEQNO                 RECNUM
+,LPSLS_DL_LOAD_STATUS           CONSTANT "L"
+,LPSLS_CODE                     CHAR "RTRIM(:LPSLS_CODE)"
+,LPSLS_DESCRIPTION              CHAR "RTRIM(:LPSLS_DESCRIPTION)"
+,LPSLS_START_DATE               DATE "DD-MON-YYYY" NULLIF LPSLS_START_DATE=blanks
+,LPSLS_SCO_CODE                 CHAR "RTRIM(:LPSLS_SCO_CODE)"
+,LPSLS_STATUS_DATE              DATE "DD-MON-YYYY" NULLIF LPSLS_STATUS_DATE=blanks
+,LPSLS_CREATED_BY               CHAR "RTRIM(:LPSLS_CREATED_BY)"
+,LPSLS_CREATED_DATE             DATE "DD-MON-YYYY" NULLIF LPSLS_CREATED_DATE=blanks
+,LPSLS_PAR_PER_ALT_REF          CHAR "RTRIM(:LPSLS_PAR_PER_ALT_REF)"
+,LPSLS_PSTY_CODE                CHAR "RTRIM(:LPSLS_PSTY_CODE)"
+,LPSLS_PROPOSED_END_DATE        DATE "DD-MON-YYYY" NULLIF LPSLS_PROPOSED_END_DATE=blanks
+,LPSLS_ACTUAL_END_DATE          DATE "DD-MON-YYYY" NULLIF LPSLS_ACTUAL_END_DATE=blanks
+,LPSLS_TARGET_NO_OF_PROPERTIES  CHAR NULLIF LPSLS_TARGET_NO_OF_PROPERTIES=blanks "TO_NUMBER(:LPSLS_TARGET_NO_OF_PROPERTIES)"
+,LPSLS_RELET_WEEKS              CHAR NULLIF LPSLS_RELET_WEEKS=blanks "TO_NUMBER(:LPSLS_RELET_WEEKS)"
+,LPSLS_FAIL_TO_NOMINATE_WEEKS   CHAR NULLIF LPSLS_FAIL_TO_NOMINATE_WEEKS=blanks "TO_NUMBER(:LPSLS_FAIL_TO_NOMINATE_WEEKS)"
+,LPSLS_FAIL_TO_NOMINATE_CHARGE  CHAR "RTRIM(:LPSLS_FAIL_TO_NOMINATE_CHARGE)"
+,LPSLS_COMMENTS                 CHAR "RTRIM(:LPSLS_COMMENTS)"
+,LPSLS_INVOICE_CYCLE            CHAR "RTRIM(:LPSLS_INVOICE_CYCLE)"
+,LPSLS_AUN_CODE                 CHAR "RTRIM(:LPSLS_AUN_CODE)"
+,LPSLS_CODE_MLANG               CHAR "RTRIM(:LPSLS_CODE_MLANG)"
+,LPSLS_DESCRIPTION_MLANG        CHAR "RTRIM(:LPSLS_DESCRIPTION_MLANG)"
+)
+

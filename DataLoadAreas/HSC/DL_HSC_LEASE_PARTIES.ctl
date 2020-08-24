@@ -1,0 +1,17 @@
+load data
+infile $gri_datafile
+APPEND
+into table DL_HSC_LEASE_PARTIES
+fields terminated by "," optionally enclosed by '"'
+trailing nullcols
+(LLPT_DLB_BATCH_ID         CONSTANT "$batch_no"
+,LLPT_DL_SEQNO             RECNUM
+,LLPT_DL_LOAD_STATUS       CONSTANT "L"
+,LLPT_LAS_LEA_PRO_PROPREF  CHAR "rtrim(:LLPT_LAS_LEA_PRO_PROPREF)"
+,LLPT_LAS_LEA_START_DATE   DATE "DD-MON-YYYY" NULLIF LLPT_LAS_LEA_START_DATE=blanks
+,LLPT_LAS_START_DATE       DATE "DD-MON-YYYY" NULLIF LLPT_LAS_START_DATE=blanks
+,LLPT_PAR_ALT_REF          CHAR "rtrim(:LLPT_PAR_ALT_REF)"
+,LLPT_START_DATE           DATE "DD-MON-YYYY" NULLIF LLPT_START_DATE=blanks
+,LLPT_END_DATE             DATE "DD-MON-YYYY" NULLIF LLPT_END_DATE=blanks
+)
+

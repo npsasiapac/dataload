@@ -1,0 +1,48 @@
+load data
+infile $gri_datafile
+APPEND
+into table DL_HEM_PROPERTIES
+fields terminated by "," optionally enclosed by '"'
+trailing nullcols
+(
+LPRO_DLB_BATCH_ID     CONSTANT "$batch_no",
+LPRO_DL_SEQNO         RECNUM,
+LPRO_DL_LOAD_STATUS   CONSTANT "L",
+LPRO_PROPREF          CHAR "rtrim(:LPRO_PROPREF)",
+LPRO_HOU_FRB          CHAR "rtrim(:LPRO_HOU_FRB)",
+LPRO_SCO_CODE         CHAR "rtrim(:LPRO_SCO_CODE)",
+LPRO_ORGANISATION_IND CHAR "rtrim(:LPRO_ORGANISATION_IND)",
+LPRO_HOU_HRV_HOT_CODE CHAR "rtrim(:LPRO_HOU_HRV_HOT_CODE)",
+LPRO_HOU_HRV_HRS_CODE CHAR "rtrim(:LPRO_HOU_HRV_HRS_CODE)",
+LPRO_HOU_HRV_HBU_CODE CHAR "rtrim(:LPRO_HOU_HRV_HBU_CODE)",
+LPRO_HOU_HRV_HLT_CODE CHAR "rtrim(:LPRO_HOU_HRV_HLT_CODE)",
+LPRO_PARENT_PROPREF   CHAR "rtrim(:LPRO_PARENT_PROPREF)",
+LPRO_HOU_SALE_DATE    DATE "DD-MON-YYYY HH24:MI:SS" NULLIF lpro_hou_sale_date=blanks,
+LPRO_HOU_SERVICE_PROP_IND CHAR "rtrim(:LPRO_HOU_SERVICE_PROP_IND)",
+LPRO_HOU_ACQUIRED_DATE    DATE "DD-MON-YYYY" NULLIF lpro_hou_acquired_date=BLANKS,
+LPRO_HOU_DEFECTS_IND      CHAR "rtrim(:LPRO_HOU_DEFECTS_IND)",
+LPRO_HOU_RESIDENTIAL_IND  CHAR "rtrim(:LPRO_HOU_RESIDENTIAL_IND)",
+LPRO_HOU_ALT_REF          CHAR "rtrim(:LPRO_HOU_ALT_REF)",
+LPRO_HOU_LEASE_START_DATE DATE "DD-MON-YYYY" 
+                                     NULLIF lpro_hou_lease_start_date=BLANKS,
+LPRO_HOU_LEASE_REVIEW_DATE DATE "DD-MON-YYYY"
+                                     NULLIF lpro_hou_lease_review_date=BLANKS,
+LPRO_HOU_CONSTRUCTION_DATE DATE "DD-MON-YYYY"
+                                     NULLIF lpro_hou_construction_date=BLANKS,
+LPRO_HOU_PTV_CODE         CHAR "rtrim(:LPRO_HOU_PTV_CODE)",
+LPRO_HOU_HRV_PST_CODE     CHAR "rtrim(:LPRO_HOU_HRV_PST_CODE)",
+LPRO_HOU_HRV_HMT_CODE     CHAR "rtrim(:LPRO_HOU_HRV_HMT_CODE)",
+LPRO_HOU_MANAGEMENT_END_DATE DATE "DD-MON-YYYY"
+                             NULLIF lpro_hou_management_end_date=BLANKS,
+LPRO_FREE_REFNO           CHAR "rtrim(:LPRO_FREE_REFNO)",
+LPRO_FREE_NAME            CHAR "rtrim(:LPRO_FREE_NAME)",
+LPRO_PROP_STATUS          CHAR "rtrim(:LPRO_PROP_STATUS)",
+LPRO_STATUS_START         DATE "DD-MON-YYYY" NULLIF lpro_status_start = BLANKS,
+LPRO_HOU_ALLOW_PLACEMENT_IND CHAR "rtrim(:LPRO_HOU_ALLOW_PLACEMENT_IND)",
+LPRO_HOU_DEBIT_TO_DATE    DATE "DD-MON-YYYY" NULLIF lpro_hou_debit_to_date=BLANKS,  
+LPRO_ON_DEBIT_START_DATE  DATE "DD-MON-YYYY" NULLIF lpro_on_debit_start_date=BLANKS,  
+LPRO_PHONE                CHAR "rtrim(:LPRO_PHONE)",
+LPRO_AGENT_PAR_REFNO      CHAR "rtrim(:LPRO_AGENT_PAR_REFNO)",
+LPRO_PLD_COMMENTS         CHAR(2000) "rtrim(:LPRO_PLD_COMMENTS)",
+LPRO_REFNO                INTEGER EXTERNAL "to_char(pro_refno_seq.nextval)"
+)

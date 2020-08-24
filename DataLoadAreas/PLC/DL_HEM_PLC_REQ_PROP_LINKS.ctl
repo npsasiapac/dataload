@@ -1,0 +1,16 @@
+load data
+APPEND
+into table DL_HEM_PLC_REQ_PROP_LINKS
+fields terminated by "," optionally enclosed by '"'
+trailing nullcols
+(
+ LPRPL_DLB_BATCH_ID              CONSTANT "$BATCH_NO"
+,LPRPL_DL_SEQNO                  RECNUM
+,LPRPL_DL_LOAD_STATUS            CONSTANT "L"
+,LPRPL_PRO_PROPREF_FROM          CHAR "rtrim(UPPER(:LPRPL_PRO_PROPREF_FROM))"
+,LPRPL_PLPR_REFNO_FROM           CHAR "rtrim(UPPER(:LPRPL_PLPR_REFNO_FROM))"
+,LPRPL_PRO_PROPREF_TO            CHAR "rtrim(UPPER(:LPRPL_PRO_PROPREF_TO))"
+,LPRPL_PLPR_REFNO_TO             CHAR "rtrim(UPPER(:LPRPL_PLPR_REFNO_TO))"
+,LPRPL_CREATED_BY                CHAR "rtrim(UPPER(:LPRPL_CREATED_BY))"
+,LPRPL_CREATED_DATE              DATE "DD-MON-YYYY HH24:MI:SS" NULLIF LPRPL_CREATED_DATE=blanks
+)

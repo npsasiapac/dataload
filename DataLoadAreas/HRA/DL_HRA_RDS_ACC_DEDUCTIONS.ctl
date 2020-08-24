@@ -1,0 +1,55 @@
+-- *********************************************************************
+--
+-- Version      Who         Date       Why
+-- 1.0          Ian Rowell  25-Sep-09  Initial Creation
+--
+-- 2.0          V.Shah      28-Jun-10  Defect 5159 Fix. Addition of
+--                                     Modified By/Date
+-- 
+-- 2.1          T.Goodley   05-Feb-18  Ensure date only columns only accept date.
+--
+-- 2.2          V. Shah     19-DEC-18  6.18 Changes added LRACD_NON_RELATED
+-- *********************************************************************
+--
+load data
+APPEND
+into table DL_HRA_RDS_ACC_DEDUCTIONS
+fields terminated by "," optionally enclosed by '"'
+trailing nullcols
+(LRACD_DLB_BATCH_ID               CONSTANT "$BATCH_NO"
+,LRACD_DL_SEQNO                   RECNUM
+,LRACD_DL_LOAD_STATUS             CONSTANT "L"
+,LRACD_RDSA_HA_REFERENCE          CHAR "rtrim(UPPER(:LRACD_RDSA_HA_REFERENCE))"
+,LRACD_RAUD_HRV_DEDT_CODE         CHAR "rtrim(UPPER(:LRACD_RAUD_HRV_DEDT_CODE))"
+,LRACD_RAUD_START_DATE            DATE "DD-MON-YYYY" NULLIF LRACD_RAUD_START_DATE=blanks
+,LRACD_RAUD_HRV_RBEG_CODE         CHAR "rtrim(UPPER(:LRACD_RAUD_HRV_RBEG_CODE))"
+,LRACD_PAY_REF                    CHAR "rtrim(UPPER(:LRACD_PAY_REF))"
+,LRACD_RADT_CODE                  CHAR "rtrim(UPPER(:LRACD_RADT_CODE))"
+,LRACD_START_DATE                 DATE "DD-MON-YYYY" NULLIF LRACD_START_DATE=blanks
+,LRACD_HRV_RBEG_CODE              CHAR "rtrim(UPPER(:LRACD_HRV_RBEG_CODE))"
+,LRACD_REQUESTED_AMOUNT           CHAR "rtrim(:LRACD_REQUESTED_AMOUNT)"
+,LRACD_FIXED_AMOUNT_IND           CHAR "rtrim(UPPER(:LRACD_FIXED_AMOUNT_IND))"
+,LRACD_MINOR_ARR_VARY_IND         CHAR "rtrim(UPPER(:LRACD_MINOR_ARR_VARY_IND))"
+,LRACD_CURRENT_SCO_CODE           CHAR "rtrim(UPPER(:LRACD_CURRENT_SCO_CODE))"
+,LRACD_STATUS_DATE                DATE "DD-MON-YYYY HH24:MI:SS" NULLIF LRACD_STATUS_DATE=blanks
+,LRACD_CREATED_BY                 CHAR "rtrim(UPPER(:LRACD_CREATED_BY))"
+,LRACD_CREATED_DATE               DATE "DD-MON-YYYY HH24:MI:SS" NULLIF LRACD_CREATED_DATE=blanks
+,LRACD_PENDING_SCO_CODE           CHAR "rtrim(UPPER(:LRACD_PENDING_SCO_CODE))"
+,LRACD_REQUESTED_PERCENTAGE       CHAR "rtrim(:LRACD_REQUESTED_PERCENTAGE)"
+,LRACD_END_DATE                   DATE "DD-MON-YYYY" NULLIF LRACD_END_DATE=blanks
+,LRACD_SUSPENDED_FROM_DATE        DATE "DD-MON-YYYY" NULLIF LRACD_SUSPENDED_FROM_DATE=blanks
+,LRACD_SUSPENDED_TO_DATE          DATE "DD-MON-YYYY" NULLIF LRACD_SUSPENDED_TO_DATE=blanks
+,LRACD_ACTION_SENT_DATETIME       DATE "DD-MON-YYYY HH24:MI:SS" NULLIF LRACD_ACTION_SENT_DATETIME=blanks
+,LRACD_HRV_SUSR_CODE              CHAR "rtrim(UPPER(:LRACD_HRV_SUSR_CODE))"
+,LRACD_HRV_TERR_CODE              CHAR "rtrim(UPPER(:LRACD_HRV_TERR_CODE))"
+,LRACD_LAST_DEDUCTION_AMOUNT      CHAR "rtrim(:LRACD_LAST_DEDUCTION_AMOUNT)"
+,LRACD_LAST_DEDUCTION_DATE        DATE "DD-MON-YYYY" NULLIF LRACD_LAST_DEDUCTION_DATE=blanks
+,LRACD_NEXT_DEDUCTION_AMOUNT      CHAR "rtrim(:LRACD_NEXT_DEDUCTION_AMOUNT)"
+,LRACD_NEXT_DEDUCTION_DATE        DATE "DD-MON-YYYY" NULLIF LRACD_NEXT_DEDUCTION_DATE=blanks
+,LRACD_MODIFIED_BY                CHAR "rtrim(UPPER(:LRACD_MODIFIED_BY))"
+,LRACD_MODIFIED_DATE              DATE "DD-MON-YYYY HH24:MI:SS" NULLIF LRACD_MODIFIED_DATE=blanks
+,LRACD_MINOR_ARR_VARY_AMOUNT      CHAR "rtrim(:LRACD_MINOR_ARR_VARY_AMOUNT)"
+,LRACD_NET_RENT_BASIS_DEDN        CHAR "rtrim(:LRACD_NET_RENT_BASIS_DEDN)"
+,LRACD_NON_RELATED                CHAR "rtrim(:LRACD_NON_RELATED)"
+,LRACD_REFNO                      INTEGER EXTERNAL "racd_seq.nextval"
+)

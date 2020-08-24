@@ -1,0 +1,18 @@
+load data
+infile $GRI_DATAFILE
+APPEND
+into table DL_HPM_TASK_GROUPS
+fields terminated by "," optionally enclosed by '"'
+trailing nullcols
+(
+ LTKG_DLB_BATCH_ID 		CONSTANT "$batch_no",
+ LTKG_DL_SEQNO 			RECNUM,
+ LTKG_DL_LOAD_STATUS 		CONSTANT "L",
+ LTKG_SRC_REFERENCE 		CHAR "rtrim(:LTKG_SRC_REFERENCE)",
+ LTKG_CODE 			CHAR "rtrim(:LTKG_CODE)",
+ LTKG_SRC_TYPE		 	CHAR "rtrim(:LTKG_SRC_TYPE)",
+ LTKG_DESCRIPTION 		CHAR "rtrim(:LTKG_DESCRIPTION)",
+ LTKG_START_DATE 		DATE "DD-MON-YYYY" NULLIF LTKG_START_DATE=BLANKS,
+ LTKG_GROUP_TYPE		CHAR "rtrim(:LTKG_GROUP_TYPE)",
+ LTKG_STM_CODE     		CHAR "rtrim(:LTKG_STM_CODE)"
+)

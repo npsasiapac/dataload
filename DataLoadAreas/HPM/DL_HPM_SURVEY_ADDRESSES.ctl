@@ -1,0 +1,20 @@
+load data
+infile $GRI_DATAFILE
+APPEND
+into table DL_HPM_SURVEY_ADDRESSES 
+fields terminated by "," optionally enclosed by '"'
+trailing nullcols
+(
+ LSUD_DLB_BATCH_ID CONSTANT "$batch_no"
+,LSUD_DL_SEQNO RECNUM
+,LSUD_DL_LOAD_STATUS CONSTANT "L"
+,LSUD_SCS_REFERENCE CHAR "rtrim(:LSUD_SCS_REFERENCE)"
+,LSUD_PRO_AUN_CODE     CHAR "rtrim(:LSUD_PRO_AUN_CODE)"
+,LSUD_TYPE             CHAR "rtrim(:LSUD_TYPE)"
+,LSUD_SCO_CODE         CHAR "rtrim(:LSUD_SCO_CODE)"
+,LSUD_STATUS_DATE      DATE "DD-MON-YYYY"  NULLIF LSUD_STATUS_DATE=blanks
+,LSUD_CREATED_DATE     DATE "DD-MON-YYYY"  NULLIF LSUD_CREATED_DATE=blanks
+,LSUD_CREATED_BY       CHAR "rtrim(:LSUD_CREATED_BY)"
+,LSUD_TEXT             CHAR "rtrim(:LSUD_TEXT)")
+
+ 
