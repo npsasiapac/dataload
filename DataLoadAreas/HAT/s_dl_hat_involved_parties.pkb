@@ -552,7 +552,8 @@ WHERE app_legacy_ref = p_lapp_legacy_ref;
 CURSOR c_get_par_refno (p_lpar_per_alt_ref VARCHAR2) IS
 SELECT par_refno
 FROM parties
-WHERE par_per_alt_ref = p_lpar_per_alt_ref;
+WHERE par_per_alt_ref = p_lpar_per_alt_ref
+OR   'PAR'||par_refno = p_lpar_per_alt_ref;
 -- *****************************
 --
 CURSOR c_hhold_dl( p_lapp_legacy_ref     VARCHAR2
@@ -1240,7 +1241,8 @@ AND   lipa_dl_load_status = 'C';
 CURSOR c2 (p_lpar_per_alt_ref VARCHAR2) IS
 SELECT par_refno
 FROM parties
-WHERE par_per_alt_ref = p_lpar_per_alt_ref;
+WHERE par_per_alt_ref = p_lpar_per_alt_ref
+OR   'PAR'||par_refno = p_lpar_per_alt_ref;
 --
 -- *****************************
 --
