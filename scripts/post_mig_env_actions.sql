@@ -208,6 +208,77 @@ END insert_param_defn_usage;
 
 exec insert_param_defn_usage('CRN', 'PARTIES', 'N', null, null, null, null, null, null, null, null, null, null, null, null, null, 400, 'Y');
 
+DECLARE
+   l_vru_id   validation_rules.vru_id%TYPE;
+   
+   CURSOR C_VRU_EXISTS IS
+      SELECT vru_id
+        FROM validation_rules
+       WHERE vru_name = 'CHPAGREE VALUE'
+         AND vru_type = 'TABLE'
+         AND vru_comments = 'Value attached to CHP Agreement';
+   
+BEGIN
+   OPEN C_VRU_EXISTS;
+   FETCH C_VRU_EXISTS INTO l_vru_id;
+   CLOSE C_VRU_EXISTS;
+   
+   IF l_vru_id IS NULL
+   THEN
+      l_vru_id := vru_id_seq.nextval;
+   END IF;
+   
+   MERGE INTO validation_rules tgt
+   USING (SELECT l_vru_id vru_id,
+                 'CHPAGREE VALUE' vru_name,
+                 'TABLE' vru_type,
+                 'Value attached to CHP Agreement' vru_comments,
+                 'Y' vru_display_lov,
+                 'ATT_CODE' vru_column_1,
+                 'Attribute Code' vru_column_1_title,
+                 'ATT_DESCRIPTION' vru_column_2,
+                 'Attribute Description' vru_column_2_title,
+                 'FROM attributes att INNER JOIN property_elements pel ON pel.pel_ele_code = att.att_ele_code and pel.pel_att_code = att.att_code AND pel.pel_ele_code = ''CHPAGREE'' AND TRUNC(SYSDATE) BETWEEN TRUNC(pel.pel_start_date) AND NVL(TRUNC(pel.pel_end_date), SYSDATE + 1)  INNER JOIN nominations nom ON nom.nom_pro_refno = pel.pel_pro_refno AND nom.nom_refno = v(''P195_NOM_REFNO'')' vru_from_clause
+            FROM dual) src
+      ON (    tgt.vru_name = src.vru_name
+          AND tgt.vru_type = src.vru_type
+          AND tgt.vru_comments = src.vru_comments)
+    WHEN MATCHED THEN
+       UPDATE
+          SET tgt.vru_display_lov = src.vru_display_lov,
+              tgt.vru_column_1 = src.vru_column_1,
+              tgt.vru_column_1_title = src.vru_column_1_title,
+              tgt.vru_column_2 = src.vru_column_2,
+              tgt.vru_column_2_title = src.vru_column_2_title,
+              tgt.vru_from_clause = src.vru_from_clause
+    WHEN NOT MATCHED THEN
+       INSERT(vru_id,
+              vru_name,
+              vru_type,
+              vru_comments,
+              vru_display_lov,
+              vru_column_1,
+              vru_column_1_title,
+              vru_column_2,
+              vru_column_2_title,
+              vru_from_clause)
+       VALUES(src.vru_id,
+              src.vru_name,
+              src.vru_type,
+              src.vru_comments,
+              src.vru_display_lov,
+              src.vru_column_1,
+              src.vru_column_1_title,
+              src.vru_column_2,
+              src.vru_column_2_title,
+              src.vru_from_clause);
+
+   UPDATE parameter_definitions
+      SET pdf_vru_id = l_vru_id
+    WHERE pdf_name = 'NOM_OFFER_PROP_AGREE';
+END;
+/
+
 DROP PROCEDURE insert_param_defn_usage;
    
 COMMIT;
