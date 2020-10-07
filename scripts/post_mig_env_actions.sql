@@ -211,15 +211,14 @@ exec insert_param_defn_usage('CRN', 'PARTIES', 'N', null, null, null, null, null
 DECLARE
    l_vru_id   validation_rules.vru_id%TYPE;
    
-   CURSOR C_VRU_EXISTS IS
+   CURSOR C_VRU_EXISTS(p_vru_name   VARCHAR2) IS
       SELECT vru_id
         FROM validation_rules
-       WHERE vru_name = 'CHPAGREE VALUE'
-         AND vru_type = 'TABLE'
-         AND vru_comments = 'Value attached to CHP Agreement';
+       WHERE vru_name = p_vru_name
+         AND vru_type = 'TABLE';
    
 BEGIN
-   OPEN C_VRU_EXISTS;
+   OPEN C_VRU_EXISTS('CHPAGREE VALUE');
    FETCH C_VRU_EXISTS INTO l_vru_id;
    CLOSE C_VRU_EXISTS;
    
@@ -238,7 +237,7 @@ BEGIN
                  'Attribute Code' vru_column_1_title,
                  'ATT_DESCRIPTION' vru_column_2,
                  'Attribute Description' vru_column_2_title,
-                 'FROM attributes att INNER JOIN property_elements pel ON pel.pel_ele_code = att.att_ele_code and pel.pel_att_code = att.att_code AND pel.pel_ele_code = ''CHPAGREE'' AND TRUNC(SYSDATE) BETWEEN TRUNC(pel.pel_start_date) AND NVL(TRUNC(pel.pel_end_date), SYSDATE + 1)  INNER JOIN nominations nom ON nom.nom_pro_refno = pel.pel_pro_refno AND nom.nom_refno = v(''P195_NOM_REFNO'')' vru_from_clause
+                 'FROM attributes att INNER JOIN property_elements pel ON pel.pel_ele_code = att.att_ele_code and pel.pel_att_code = att.att_code AND pel.pel_ele_code = ''CHPAGREE'' AND TRUNC(SYSDATE) BETWEEN TRUNC(pel.pel_start_date) AND NVL(TRUNC(pel.pel_end_date), SYSDATE + 1)  INNER JOIN nominations nom ON nom.nom_pro_refno = pel.pel_pro_refno AND nom.nom_refno = NVL(v(''P195_NOM_REFNO''), v(''P135_NOM_REFNO''))' vru_from_clause
             FROM dual) src
       ON (    tgt.vru_name = src.vru_name
           AND tgt.vru_type = src.vru_type
@@ -276,6 +275,66 @@ BEGIN
    UPDATE parameter_definitions
       SET pdf_vru_id = l_vru_id
     WHERE pdf_name = 'NOM_OFFER_PROP_AGREE';
+    
+   l_vru_id := NULL;
+    
+   OPEN C_VRU_EXISTS('GRPHOUSE VALUES');
+   FETCH C_VRU_EXISTS INTO l_vru_id;
+   CLOSE C_VRU_EXISTS;
+   
+   IF l_vru_id IS NULL
+   THEN
+      l_vru_id := vru_id_seq.nextval;
+   END IF;
+   
+   MERGE INTO validation_rules tgt
+   USING (SELECT l_vru_id vru_id,
+                 'GRPHOUSE VALUES' vru_name,
+                 'TABLE' vru_type,
+                 'TEXT_ID values for GRPHOUSE elements' vru_comments,
+                 'Y' vru_display_lov,
+                 'PVA_CHAR_VALUE' vru_column_1,
+                 'Text ID' vru_column_1_title,
+                 'PVA_CHAR_VALUE' vru_column_2,
+                 'Text ID' vru_column_2_title,
+                 'FROM nominations nom INNER JOIN property_elements pel on pel.pel_pro_refno = nom.nom_pro_refno and pel.pel_ele_code LIKE ''GRPHOUSE_%'' AND TRUNC(SYSDATE) BETWEEN TRUNC(pel.pel_start_date) AND NVL(TRUNC(pel.pel_end_date), SYSDATE + 1) INNER JOIN elements ele ON ele.ele_code = pel.pel_ele_code INNER JOIN parameter_values pva ON pva.pva_pdu_pgp_refno = ele.ele_pgp_refno AND pva.pva_pdu_pdf_name = ''TEXT_ID'' AND pva.pva_pdu_pob_table_name = ''NULL'' WHERE nom.nom_refno = NVL(v(''P195_NOM_REFNO''), v(''P135_NOM_REFNO''))' vru_from_clause
+            FROM dual) src
+      ON (    tgt.vru_name = src.vru_name
+          AND tgt.vru_type = src.vru_type
+          AND tgt.vru_comments = src.vru_comments)
+    WHEN MATCHED THEN
+       UPDATE
+          SET tgt.vru_display_lov = src.vru_display_lov,
+              tgt.vru_column_1 = src.vru_column_1,
+              tgt.vru_column_1_title = src.vru_column_1_title,
+              tgt.vru_column_2 = src.vru_column_2,
+              tgt.vru_column_2_title = src.vru_column_2_title,
+              tgt.vru_from_clause = src.vru_from_clause
+    WHEN NOT MATCHED THEN
+       INSERT(vru_id,
+              vru_name,
+              vru_type,
+              vru_comments,
+              vru_display_lov,
+              vru_column_1,
+              vru_column_1_title,
+              vru_column_2,
+              vru_column_2_title,
+              vru_from_clause)
+       VALUES(src.vru_id,
+              src.vru_name,
+              src.vru_type,
+              src.vru_comments,
+              src.vru_display_lov,
+              src.vru_column_1,
+              src.vru_column_1_title,
+              src.vru_column_2,
+              src.vru_column_2_title,
+              src.vru_from_clause);
+              
+   UPDATE parameter_definitions
+      SET pdf_vru_id = l_vru_id
+    WHERE pdf_name = 'GRPHOUSE';
 END;
 /
 
