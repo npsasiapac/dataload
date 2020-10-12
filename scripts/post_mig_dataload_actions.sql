@@ -6,3 +6,5 @@ UPDATE first_ref_values
    AND frv_code = 'MIGRATION';
    
 COMMIT;
+
+ALTER TRIGGER ASSE_BR_I ENABLE;
