@@ -1,5 +1,13 @@
 ALTER TRIGGER PAR_CRN_BR_IU DISABLE;
 
+UPDATE parties
+   SET par_per_alt_ref = 'AMELIE'
+ WHERE par_refno = 20000563;
+ 
+UPDATE parties
+   SET par_per_alt_ref = 'YOURPL'
+ WHERE par_refno = 20000260;
+
 UPDATE first_ref_values
    SET frv_current_ind = 'Y'
  WHERE frv_frd_domain = 'VERIFIEDTYPE'
