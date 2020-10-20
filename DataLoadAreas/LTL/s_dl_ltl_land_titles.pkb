@@ -28,7 +28,7 @@ AS
 --                                   is disabled on create needs adding at v6.13
 --      6.2   6.14   AJ  16/03/2016  1) lltl_reference amended from (17) to (22)
 --                                   and lltl_lot_number from (4) to (6) 
---
+--      6.3   6.20   PL  20/10/2020  Added par_org_current_ind = 'Y'
 -- ***********************************************************************
 --
 --
@@ -112,13 +112,15 @@ AS
     WHERE  p_par_per_alt_ref IS NOT NULL
     AND    par_per_alt_ref = p_par_per_alt_ref
     AND    par_org_frv_oty_code = NVL(p_par_org_frv_oty_code,par_org_frv_oty_code)
+    AND    par_org_current_ind = 'Y'--6.3
     UNION
     SELECT par_refno
     FROM   parties
     WHERE  p_par_org_short_name IS NOT NULL
     AND    p_par_org_frv_oty_code IS NOT NULL
     AND    par_org_short_name   = p_par_org_short_name
-    AND    par_org_frv_oty_code = p_par_org_frv_oty_code;
+    AND    par_org_frv_oty_code = p_par_org_frv_oty_code
+    AND    par_org_current_ind = 'Y'; --6.3
 -- *************************************
   CURSOR c_prev_ltt_no                                  
     (p_lltl_lltl_plan_number NUMBER
@@ -394,13 +396,15 @@ AS
     WHERE  p_par_per_alt_ref IS NOT NULL
     AND    par_per_alt_ref = p_par_per_alt_ref
     AND    par_org_frv_oty_code = NVL(p_par_org_frv_oty_code,par_org_frv_oty_code)
+    AND    par_org_current_ind = 'Y' -- v6.3
     UNION
     SELECT par_refno
     FROM   parties
     WHERE  p_par_org_short_name IS NOT NULL
     AND    p_par_org_frv_oty_code IS NOT NULL
     AND    par_org_short_name   = p_par_org_short_name
-    AND    par_org_frv_oty_code = p_par_org_frv_oty_code;
+    AND    par_org_frv_oty_code = p_par_org_frv_oty_code
+    AND    par_org_current_ind = 'Y'; -- v6.3
   CURSOR c_prev_ltt_no
     (p_lltl_lltl_plan_number NUMBER
     ,p_lltl_lltl_lot_number  VARCHAR2

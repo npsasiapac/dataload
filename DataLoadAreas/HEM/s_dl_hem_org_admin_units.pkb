@@ -10,7 +10,7 @@ AS
 --                                development
 --  1.2  6.14   AJ   05-APR-2017  Further updates done script completed and tested 
 --  1.3  6.14   AJ   06-APR-2017  Further updates done during testing 
---
+--  1.4  6.20   PL   20-OCT-2020  Added par_org_current_ind = 'Y'
 --  declare package variables AND constants
 --
 -- ***********************************************************************
@@ -521,7 +521,8 @@ SELECT par_refno
 FROM parties
 WHERE par_org_name = p_org_name
 AND par_refno      = p_par_refno
-AND par_type       = 'ORG';
+AND par_type       = 'ORG'
+AND par_org_current_ind = 'Y';
 --
 --*************************
 CURSOR chk_org_type(p_org_type  VARCHAR2)
@@ -540,7 +541,8 @@ SELECT count(par_refno)
 FROM parties
 WHERE par_org_name     = p_org_name
 AND par_org_short_name = p_org_short_name
-AND par_type           = 'ORG';
+AND par_type           = 'ORG'
+AND par_org_current_ind = 'Y';
 --
 -- Check b
 CURSOR get_org_b(p_org_name       VARCHAR2
@@ -550,7 +552,8 @@ SELECT par_refno
 FROM parties
 WHERE par_org_name     = p_org_name
 AND par_org_short_name = p_org_short_name
-AND par_type           = 'ORG';
+AND par_type           = 'ORG'
+AND par_org_current_ind = 'Y';
 --
 --*************************
 -- Check c
@@ -563,7 +566,8 @@ FROM parties
 WHERE par_org_name       = p_org_name
 AND par_org_short_name   = p_org_short_name
 AND par_org_frv_oty_code = p_org_frv_oty_code
-AND par_type             = 'ORG';
+AND par_type             = 'ORG'
+AND par_org_current_ind = 'Y';
 --
 -- Check c
 CURSOR get_org_c(p_org_name         VARCHAR2
@@ -575,7 +579,8 @@ FROM parties
 WHERE par_org_name       = p_org_name
 AND par_org_short_name   = p_org_short_name
 AND par_org_frv_oty_code = p_org_frv_oty_code
-AND par_type             = 'ORG';
+AND par_type             = 'ORG'
+AND par_org_current_ind = 'Y';
 --
 --*************************
 --CURSOR get_par (p_org_name       VARCHAR2
