@@ -33,7 +33,8 @@ AS
 --                                      question to determine what to do lcde_occ_create or lcde_oco_update
 --                                      2) Delete for OCC and OC2 amended during testing update wrong
 --                                      3) Tested changes appears to work
---  3.9      6.18     PL   19-AUG-2019  Set Telephone number field    
+--  3.9      6.18     PL   19-AUG-2019  Set Telephone number field
+--  3.10     6.20     PL   26-OCT-2020  Current ind on org.
 --  declare package variables AND constants
 --
 -- ************************************************************************************
@@ -61,7 +62,7 @@ PROCEDURE dataload_create(p_batch_id  IN VARCHAR2,
                           p_date      IN DATE)
 AS
 --
-CURSOR c1 
+CURSOR c1
 IS
 SELECT rowid rec_rowid,
        lcde_dlb_batch_id,
@@ -100,14 +101,14 @@ SELECT rowid rec_rowid,
    AND lcde_dl_load_status = 'V';
 --
 -- *************************************
-CURSOR c_pro_refno (p_pro_propref VARCHAR2) 
+CURSOR c_pro_refno (p_pro_propref VARCHAR2)
 IS
 SELECT pro_refno
   FROM properties
  WHERE pro_propref = p_pro_propref;
 --
 -- *************************************
-CURSOR c_par_refno (p_par_alt_ref VARCHAR2) 
+CURSOR c_par_refno (p_par_alt_ref VARCHAR2)
 IS
 SELECT par_refno
   FROM parties
@@ -115,7 +116,7 @@ SELECT par_refno
 --
 -- *************************************
 CURSOR c_bde_refno(p_bde_bank_name   VARCHAR2,
-                   p_bde_branch_name VARCHAR2) 
+                   p_bde_branch_name VARCHAR2)
 IS
 SELECT bde_refno
   FROM bank_details
@@ -123,7 +124,7 @@ SELECT bde_refno
    AND bde_branch_name = p_bde_branch_name;
 --
 -- *************************************
-CURSOR c_srq_refno (p_srq_alt_ref VARCHAR2) 
+CURSOR c_srq_refno (p_srq_alt_ref VARCHAR2)
 IS
 SELECT srq_no
   FROM service_requests
@@ -136,14 +137,15 @@ SELECT par_refno
   FROM parties
  WHERE par_org_short_name = p_org_short_name
    AND par_org_frv_oty_code = p_org_frv_oty_code
-   AND par_type = 'ORG';
+   AND par_type = 'ORG'
+   AND par_org_current_ind = 'Y';  --3.20
 --
 -- *************************************
 CURSOR c_org_ct_refno(p_org_short_name   VARCHAR2
                      ,p_org_frv_oty_code VARCHAR2
                      ,p_oco_forename     VARCHAR2
                      ,p_oco_surname      VARCHAR2) IS
-SELECT oc.oco_refno, oc.oco_par_refno 
+SELECT oc.oco_refno, oc.oco_par_refno
   FROM parties p
       ,organisation_contacts oc
  WHERE p.par_org_short_name = p_org_short_name
@@ -151,7 +153,9 @@ SELECT oc.oco_refno, oc.oco_par_refno
    AND p.par_type = 'ORG'
    AND p.par_refno = oc.oco_par_refno
    AND oc.oco_forename = p_oco_forename
-   AND oc.oco_surname = p_oco_surname;
+   AND oc.oco_surname = p_oco_surname
+   AND p.par_org_current_ind = 'Y';--3.20
+--
 --
 -- *************************************
 CURSOR c_org_ct2_refno(p_org_refno    VARCHAR2
@@ -182,7 +186,9 @@ SELECT p.par_refno
   FROM parties p
  WHERE p.par_org_short_name = p_org_short_name
    AND p.par_org_frv_oty_code = p_org_frv_oty_code
-   AND p.par_type = 'ORG';
+   AND p.par_type = 'ORG'
+   AND p.par_org_current_ind = 'Y';--3.20
+--
 --
 -- *************************************
 CURSOR get_reusable_refno
@@ -205,9 +211,9 @@ WHERE oco_refno = p_oco_refno
   AND oco_signatory_ind = p_signatory_ind
   AND trunc(oco_start_date) = p_start_date
   AND nvl(oco_frv_ocr_code,'A') = nvl(p_frv_ocr_code,'A')
-  AND nvl(oco_frv_opl_code,'A') = nvl(p_frv_opl_code,'A') 
-  AND nvl(oco_frv_title,'A') = nvl(p_frv_title,'A') 
-  AND nvl(oco_end_date,'01-DEC-2999') = nvl(p_end_date,'01-DEC-2999') 
+  AND nvl(oco_frv_opl_code,'A') = nvl(p_frv_opl_code,'A')
+  AND nvl(oco_frv_title,'A') = nvl(p_frv_title,'A')
+  AND nvl(oco_end_date,'01-DEC-2999') = nvl(p_end_date,'01-DEC-2999')
   AND nvl(oco_comments,'A') = nvl(p_comments,'A');
 --
 -- *************************************
@@ -325,7 +331,7 @@ BEGIN
 --
    END IF;
 --
-  ELSIF (p1.lcde_legacy_type = 'PRF') THEN 
+  ELSIF (p1.lcde_legacy_type = 'PRF') THEN
 --
    l_par_refno := p1.lcde_legacy_ref;
 --
@@ -355,7 +361,7 @@ BEGIN
 --
    END IF;
 --
-  ELSIF (p1.lcde_legacy_type = 'COS') THEN 
+  ELSIF (p1.lcde_legacy_type = 'COS') THEN
 --
    l_cos_code    := p1.lcde_legacy_ref;
    l_cse_contact := p1.lcde_secondary_ref;
@@ -387,7 +393,7 @@ BEGIN
 --
    END IF;
 --
-  ELSIF (p1.lcde_legacy_type = 'PEG') THEN 
+  ELSIF (p1.lcde_legacy_type = 'PEG') THEN
 --
    l_peg_code := p1.lcde_legacy_ref;
 --
@@ -401,7 +407,7 @@ BEGIN
 --
    END IF;
 --
-  ELSIF (p1.lcde_legacy_type = 'ORG') THEN 
+  ELSIF (p1.lcde_legacy_type = 'ORG') THEN
 --
    OPEN c_org_refno(p1.lcde_legacy_ref,p1.lcde_secondary_ref);
    FETCH c_org_refno INTO l_par_refno;
@@ -417,7 +423,7 @@ BEGIN
 --
    END IF;
 --
-  ELSIF (p1.lcde_legacy_type = 'OCC') THEN 
+  ELSIF (p1.lcde_legacy_type = 'OCC') THEN
 --
    OPEN c_org_ct_refno(p1.lcde_legacy_ref,p1.lcde_secondary_ref,
                        p1.lcde_oco_forename,p1.lcde_oco_surname);
@@ -442,7 +448,7 @@ BEGIN
 --
    END IF;
 --
-  ELSIF (p1.lcde_legacy_type = 'OC2') THEN 
+  ELSIF (p1.lcde_legacy_type = 'OC2') THEN
 --
    OPEN c_org_ct2_refno(p1.lcde_legacy_ref
                        ,p1.lcde_oco_forename
@@ -468,7 +474,7 @@ BEGIN
 -- not found for OCC and OC2 record types only needed before Contact details
 -- created so this should create the Organisation Contact on the 1st record
 -- and subsequently find it on the others for the same contact
--- 
+--
   IF (l_oco_refno IS NULL                AND
       p1.lcde_oco_create = 'Y'           AND
       p1.lcde_legacy_type IN('OCC','OC2')   ) THEN
@@ -524,7 +530,7 @@ BEGIN
 -- Update Organisation Contacts record where Organisation Contact
 -- found for OCC and OC2 record types and details supplied are different
 -- and lcde_oco_update is set to Y first check if fields different
--- 
+--
   IF (l_oco_refno IS NOT NULL            AND
       p1.lcde_oco_update = 'Y'           AND
       p1.lcde_legacy_type IN('OCC','OC2')   ) THEN
@@ -585,7 +591,7 @@ BEGIN
               cde_allow_texts,
               cde_comments,
               cde_oco_refno,
-			  cde_telephone_no
+        cde_telephone_no
              )
        VALUES
              (l_cde_refno,
@@ -609,7 +615,7 @@ BEGIN
               p1.lcde_allow_texts,
               p1.lcde_comments,
               l_oco_refno,
-			  CASE WHEN p1.lcde_frv_cme_code = 'EMAIL' THEN '' ELSE p1.lcde_contact_value END --VSTS28044
+        CASE WHEN p1.lcde_frv_cme_code = 'EMAIL' THEN '' ELSE p1.lcde_contact_value END --VSTS28044
              );
 --
   IF (l_cde_refno IS NOT NULL) THEN
@@ -637,10 +643,10 @@ BEGIN
 --
 -- keep a count of the rows processed AND COMMIT after every 5000
 --
-  i := i+1; 
+  i := i+1;
 --
-  IF MOD(i,5000) =0 THEN 
-   COMMIT; 
+  IF MOD(i,5000) =0 THEN
+   COMMIT;
   END IF;
 --
   EXCEPTION
@@ -676,7 +682,7 @@ PROCEDURE dataload_validate(p_batch_id  IN VARCHAR2,
                             p_date      IN DATE)
 AS
 --
-CURSOR c1 
+CURSOR c1
 IS
 SELECT rowid rec_rowid,
        lcde_dlb_batch_id,
@@ -715,28 +721,28 @@ SELECT rowid rec_rowid,
    AND lcde_dl_load_status IN ('L','F','O');
 --
 -- *************************************
-CURSOR c_pro_refno (p_pro_propref VARCHAR2) 
+CURSOR c_pro_refno (p_pro_propref VARCHAR2)
 IS
 SELECT 'X'
   FROM properties
  WHERE pro_propref = p_pro_propref;
 --
 -- *************************************
-CURSOR c_aun_code (p_aun_code VARCHAR2) 
+CURSOR c_aun_code (p_aun_code VARCHAR2)
 IS
 SELECT 'X'
-  FROM admin_units 
+  FROM admin_units
  WHERE aun_code = p_aun_code;
 --
 -- *************************************
-CURSOR c_par_refno (p_par_alt_ref VARCHAR2) 
+CURSOR c_par_refno (p_par_alt_ref VARCHAR2)
 IS
 SELECT 'X'
   FROM parties
  WHERE par_per_alt_ref = p_par_alt_ref;
 --
 -- *************************************
-CURSOR c_prf_refno (p_par_refno VARCHAR2) 
+CURSOR c_prf_refno (p_par_refno VARCHAR2)
 IS
 SELECT 'X'
   FROM parties
@@ -744,7 +750,7 @@ SELECT 'X'
 --
 -- *************************************
 CURSOR c_bde_refno (p_bde_bank_name   VARCHAR2,
-                    p_bde_branch_name VARCHAR2) 
+                    p_bde_branch_name VARCHAR2)
 IS
 SELECT 'X'
   FROM bank_details
@@ -759,7 +765,7 @@ SELECT 'X'
  WHERE cos_code = p_cos_code;
 --
 -- *************************************
-CURSOR c_srq_refno (p_srq_alt_ref VARCHAR2) 
+CURSOR c_srq_refno (p_srq_alt_ref VARCHAR2)
 IS
 SELECT 'X'
   FROM service_requests
@@ -777,8 +783,8 @@ CURSOR c_csc_code (p_cos_code     VARCHAR2,
                    p_contact_name VARCHAR2)
 IS
 SELECT 'X'
-  FROM con_site_contacts 
- WHERE csc_cos_code = p_cos_code 
+  FROM con_site_contacts
+ WHERE csc_cos_code = p_cos_code
    AND csc_contact  = p_contact_name;
 --
 -- *************************************
@@ -802,7 +808,8 @@ CURSOR chk_org_count(p_org_short_name   VARCHAR2
 SELECT count(*)
   FROM parties
  WHERE par_org_short_name   = p_org_short_name
-  AND  par_org_frv_oty_code = p_org_frv_oty_code;
+  AND  par_org_frv_oty_code = p_org_frv_oty_code
+  AND  par_org_current_ind = 'Y';
 --
 -- *************************************
 CURSOR chk_org_ct_refno(p_org_short_name   VARCHAR2
@@ -833,12 +840,14 @@ SELECT count(*)
   AND  oc.oco_surname = p_oco_surname;
 --
 -- *************************************
-CURSOR c_org_refno (p_org_refno VARCHAR2) 
+CURSOR c_org_refno (p_org_refno VARCHAR2)
 IS
 SELECT 'X'
   FROM parties
  WHERE par_refno = p_org_refno
-   AND par_type = 'ORG';
+   AND par_type = 'ORG'
+   AND par_org_current_ind = 'Y';--3.20
+--
 --
 -- *************************************
 CURSOR c_org_ct2_refno(p_org_refno    VARCHAR2
@@ -852,7 +861,7 @@ SELECT 'X'
 --
 -- *************************************
 CURSOR c_conm(p_lconm_code VARCHAR2)  IS
-SELECT conm_current_ind 
+SELECT conm_current_ind
       ,conm_code
       ,conm_digits_only_ind
       ,conm_value_min_length
@@ -908,7 +917,7 @@ l_email_valid        VARCHAR2(1);
 --
 -- Variables for contact details check
 --
-l_whole_part_count   NUMBER(10); 
+l_whole_part_count   NUMBER(10);
 l_fract_part_count   NUMBER(10);
 li                   INTEGER := 0;
 l_conm_code_out      VARCHAR2(10);
@@ -918,7 +927,7 @@ l_conm_min_len       NUMBER(3,0);
 l_conm_max_len       NUMBER(3,0);
 l_conm_spaces        VARCHAR2(1);
 l_chk_conm_spaces    VARCHAR2(1);
-l_char contact_details.cde_contact_value%TYPE; 
+l_char contact_details.cde_contact_value%TYPE;
 --
 BEGIN
 --
@@ -992,7 +1001,7 @@ BEGIN
    END IF;
 --
    CLOSE c_aun_code;
---     
+--
   END IF;
 --- *********************************************
   IF (p1.lcde_legacy_type = 'PAR') THEN
@@ -1035,7 +1044,7 @@ BEGIN
   END IF;
 -- *********************************************
   IF (p1.lcde_legacy_type = 'COS') THEN
--- 
+--
    OPEN c_cos_code(p1.lcde_legacy_ref);
    FETCH c_cos_code INTO l_cos_exists;
 --
@@ -1047,7 +1056,7 @@ BEGIN
 --
 -- Now check that contact name supplied exists in con_site_contacts table
 --
-   IF (    p1.lcde_secondary_ref IS NOT NULL 
+   IF (    p1.lcde_secondary_ref IS NOT NULL
        AND l_cos_exists          IS NOT NULL) THEN
 --
     OPEN c_csc_code(p1.lcde_legacy_ref, p1.lcde_secondary_ref);
@@ -1064,7 +1073,7 @@ BEGIN
   END IF;
 -- *********************************************
   IF (p1.lcde_legacy_type = 'SRQ') THEN
--- 
+--
    OPEN c_srq_refno(p1.lcde_legacy_ref);
    FETCH c_srq_refno INTO l_srq_exists;
 --
@@ -1077,7 +1086,7 @@ BEGIN
   END IF;
 -- *********************************************
   IF (p1.lcde_legacy_type = 'PEG') THEN
--- 
+--
    OPEN c_peg_code(p1.lcde_legacy_ref);
    FETCH c_peg_code INTO l_peg_exists;
 --
@@ -1140,7 +1149,7 @@ BEGIN
 --
 -- only error if not found when Organisation Contacts Create Marker is not Y
 --
-    IF nvl(p1.lcde_oco_create,'N') ='N' THEN 
+    IF nvl(p1.lcde_oco_create,'N') ='N' THEN
      IF (l_occ_exists IS NULL) THEN
       l_errors:=s_dl_errors.record_error(cb,cp,cd,ct,cs,'HD2',937);
      END IF;
@@ -1189,7 +1198,7 @@ BEGIN
    IF (p1.lcde_legacy_ref IS NOT NULL) THEN
     OPEN c_org_refno(p1.lcde_legacy_ref);
     FETCH c_org_refno INTO l_org_exists;
-    CLOSE c_org_refno;		   
+    CLOSE c_org_refno;
 --
     IF (l_org_exists IS NULL) THEN
      l_errors:=s_dl_errors.record_error(cb,cp,cd,ct,cs,'HD2',938);
@@ -1208,7 +1217,7 @@ BEGIN
 --
 -- only error if not found when Organisation Contacts Create Marker is not Y
 --
-    IF nvl(p1.lcde_oco_create,'N') ='N' THEN 
+    IF nvl(p1.lcde_oco_create,'N') ='N' THEN
      IF (l_occ_exists IS NULL) THEN
       l_errors:=s_dl_errors.record_error(cb,cp,cd,ct,cs,'HD2',937);
      END IF;
@@ -1267,7 +1276,7 @@ BEGIN
 -- Check the Contact Method is Valid in table contact_methods
 --
   IF (p1.lcde_frv_cme_code IS NOT NULL) THEN  -- Top
---          
+--
    OPEN c_conm_code(p1.lcde_frv_cme_code);
    FETCH c_conm_code INTO l_cme_exists;
    IF (c_conm_code%NOTFOUND) THEN
@@ -1280,15 +1289,15 @@ BEGIN
    IF (p1.lcde_frv_cme_code != 'EMAIL' AND l_cme_exists IS NOT NULL) THEN -- L1
 --
     li := LENGTH(p1.lcde_contact_value);
--- 
+--
     OPEN c_conm(p1.lcde_frv_cme_code);
     FETCH c_conm INTO l_conm_cur
-                     ,l_conm_code_out		  
+                     ,l_conm_code_out
                      ,l_conm_dig
                      ,l_conm_min_len
                      ,l_conm_max_len
                      ,l_conm_spaces;
-    CLOSE c_conm;	
+    CLOSE c_conm;
 --
 -- check that only contains digits if set to Y (l_conm_dig)
 --
@@ -1318,7 +1327,7 @@ BEGIN
                        ,p1.lcde_dl_seqno
                        ,p1.lcde_frv_cme_code);
      FETCH c_conm_spaces INTO l_chk_conm_spaces;
-     IF c_conm_spaces%NOTFOUND 
+     IF c_conm_spaces%NOTFOUND
       THEN
        l_errors := s_dl_errors.record_error(cb,cp,cd,ct,cs,'HD2',833);
      END IF;
@@ -1330,7 +1339,7 @@ BEGIN
     IF l_conm_cur = 'N' THEN
      l_errors := s_dl_errors.record_error(cb,cp,cd,ct,cs,'HD2',834);
     END IF;
---			
+--
    END IF;    -- L1
   END IF;   -- Top
 -- *********************************************
@@ -1418,7 +1427,7 @@ BEGIN
 --
   END IF; --p1.lcde_frv_cme_code = EMAIL
 -- *********************************************
--- 
+--
 -- If supplied Comm Pref Code LCDE_FRV_COMM_PREF_CODE is valid
 --
   IF (p1.lcde_frv_comm_pref_code IS NOT NULL) THEN
@@ -1441,9 +1450,9 @@ BEGIN
 --
 -- keep a count of the rows processed and commit after every 1000
 --
-  i := i+1; 
-  IF MOD(i,1000)=0 THEN 
-   COMMIT; 
+  i := i+1;
+  IF MOD(i,1000)=0 THEN
+   COMMIT;
   END IF;
 --
   EXCEPTION
@@ -1469,10 +1478,10 @@ END dataload_validate;
 -- *********************************************
 --
 PROCEDURE dataload_delete (p_batch_id IN VARCHAR2,
-                           p_date     IN DATE) 
+                           p_date     IN DATE)
 AS
 --
-CURSOR c1 
+CURSOR c1
 IS
 SELECT rowid rec_rowid,
        lcde_dlb_batch_id,
@@ -1512,10 +1521,10 @@ SELECT rowid rec_rowid,
 --
 -- *********************************************
 -- PRO
-CURSOR c_pro_refno (p_propref       VARCHAR2, 
+CURSOR c_pro_refno (p_propref       VARCHAR2,
                     p_start_date    DATE,
-                    p_contact_value VARCHAR2, 
-                    p_method        VARCHAR2) 
+                    p_contact_value VARCHAR2,
+                    p_method        VARCHAR2)
 IS
 SELECT cde_refno,
        pro_refno
@@ -1529,10 +1538,10 @@ SELECT cde_refno,
 --
 -- *********************************************
 -- AUN
-CURSOR c_aun_code (p_aun_code      VARCHAR2, 
+CURSOR c_aun_code (p_aun_code      VARCHAR2,
                    p_start_date    DATE,
-                   p_contact_value VARCHAR2, 
-                   p_method        VARCHAR2) 
+                   p_contact_value VARCHAR2,
+                   p_method        VARCHAR2)
 IS
 SELECT cde_refno
   FROM contact_details
@@ -1543,16 +1552,16 @@ SELECT cde_refno
 --
 -- *********************************************
 -- PAR
-CURSOR c_par_refno (p_par_alt_ref   VARCHAR2, 
+CURSOR c_par_refno (p_par_alt_ref   VARCHAR2,
                     p_start_date    DATE,
-                    p_contact_value VARCHAR2, 
-                    p_method        VARCHAR2) 
+                    p_contact_value VARCHAR2,
+                    p_method        VARCHAR2)
 IS
 SELECT cde_refno,
        par_refno
   FROM parties,
        contact_details
- WHERE par_per_alt_ref   = p_par_alt_ref  
+ WHERE par_per_alt_ref   = p_par_alt_ref
    AND par_refno         = cde_par_refno
    AND cde_start_date    = p_start_date
    AND cde_contact_value = p_contact_value
@@ -1560,15 +1569,15 @@ SELECT cde_refno,
 --
 -- *********************************************
 -- PRF
-CURSOR c_prf_refno (p_par_refno     VARCHAR2, 
+CURSOR c_prf_refno (p_par_refno     VARCHAR2,
                     p_start_date    DATE,
-                    p_contact_value VARCHAR2, 
-                    p_method        VARCHAR2) 
+                    p_contact_value VARCHAR2,
+                    p_method        VARCHAR2)
 IS
 SELECT cde_refno
   FROM parties,
        contact_details
- WHERE par_refno         = p_par_refno  
+ WHERE par_refno         = p_par_refno
    AND par_refno         = cde_par_refno
    AND cde_start_date    = p_start_date
    AND cde_contact_value = p_contact_value
@@ -1577,10 +1586,10 @@ SELECT cde_refno
 -- *********************************************
 -- BDE
 CURSOR c_bde_refno (p_bde_bank_name   VARCHAR2,
-                    p_bde_branch_name VARCHAR2, 
+                    p_bde_branch_name VARCHAR2,
                     p_start_date      DATE,
-                    p_contact_value   VARCHAR2, 
-                    p_method          VARCHAR2) 
+                    p_contact_value   VARCHAR2,
+                    p_method          VARCHAR2)
 IS
 SELECT cde_refno,
        bde_refno
@@ -1611,10 +1620,10 @@ SELECT cde_refno
 --
 -- *********************************************
 -- SRQ
-CURSOR c_srq_refno (p_srq_alt_ref   VARCHAR2, 
+CURSOR c_srq_refno (p_srq_alt_ref   VARCHAR2,
                     p_start_date    DATE,
-                    p_contact_value VARCHAR2, 
-                    p_method        VARCHAR2) 
+                    p_contact_value VARCHAR2,
+                    p_method        VARCHAR2)
 IS
 SELECT cde_refno,
        srq_no
@@ -1628,10 +1637,10 @@ SELECT cde_refno,
 --
 -- *********************************************
 -- PEG
-CURSOR c_peg_code (p_peg_code      VARCHAR2, 
+CURSOR c_peg_code (p_peg_code      VARCHAR2,
                    p_start_date    DATE,
-                   p_contact_value VARCHAR2, 
-                   p_method        VARCHAR2) 
+                   p_contact_value VARCHAR2,
+                   p_method        VARCHAR2)
 IS
 SELECT cde_refno
   FROM contact_details
@@ -1643,10 +1652,10 @@ SELECT cde_refno
 -- *********************************************
 -- ORG
 CURSOR c_org_refno (p_org_short_name   VARCHAR2
-                   ,p_org_frv_oty_code VARCHAR2 
+                   ,p_org_frv_oty_code VARCHAR2
                    ,p_start_date       DATE
-                   ,p_contact_value    VARCHAR2 
-                   ,p_method           VARCHAR2) 
+                   ,p_contact_value    VARCHAR2
+                   ,p_method           VARCHAR2)
 IS
 SELECT cde_refno,
        par_refno
@@ -1664,8 +1673,8 @@ SELECT cde_refno,
 CURSOR c_oco_org_refno(p_org_short_name   VARCHAR2
                       ,p_org_frv_oty_code VARCHAR2
                       ,p_start_date       DATE
-                      ,p_contact_value    VARCHAR2 
-                      ,p_method           VARCHAR2					  
+                      ,p_contact_value    VARCHAR2
+                      ,p_method           VARCHAR2
                       ,p_oco_forename     VARCHAR2
                       ,p_oco_surname      VARCHAR2) IS
 SELECT cd.cde_refno,
@@ -1687,8 +1696,8 @@ SELECT cd.cde_refno,
 -- OC2
 CURSOR c_oco_ct2_refno(p_orgct_refno      VARCHAR2
                       ,p_start_date       DATE
-                      ,p_contact_value    VARCHAR2 
-                      ,p_method           VARCHAR2					  
+                      ,p_contact_value    VARCHAR2
+                      ,p_method           VARCHAR2
                       ,p_oco_forename     VARCHAR2
                       ,p_oco_surname      VARCHAR2) IS
 SELECT cd.cde_refno,
@@ -1753,7 +1762,7 @@ BEGIN
   cs   := p1.lcde_dl_seqno;
   l_id := p1.rec_rowid;
 --
-  SAVEPOINT SP1;  
+  SAVEPOINT SP1;
 --
   l_cde_refno   := NULL;
 --
@@ -1774,15 +1783,15 @@ BEGIN
 --
   IF (p1.lcde_legacy_type = 'PRO') THEN
 --
-   OPEN  c_pro_refno(p1.lcde_legacy_ref,    
+   OPEN  c_pro_refno(p1.lcde_legacy_ref,
                      p1.lcde_start_date,
-                     p1.lcde_contact_value, 
+                     p1.lcde_contact_value,
                      p1.lcde_frv_cme_code);
    FETCH c_pro_refno INTO l_cde_refno, l_pro_refno;
    CLOSE c_pro_refno;
 --
    IF (l_answer = 'Y') THEN
-    UPDATE contact_details 
+    UPDATE contact_details
        SET cde_end_date = NULL
      WHERE cde_pro_refno    = l_pro_refno
        AND cde_frv_cme_code = p1.lcde_frv_cme_code
@@ -1792,15 +1801,15 @@ BEGIN
   ELSIF (p1.lcde_legacy_type = 'AUN') THEN
 --
    IF (p1.lcde_refno IS NULL) THEN
-    OPEN c_aun_code (p1.lcde_legacy_ref,    
+    OPEN c_aun_code (p1.lcde_legacy_ref,
                      p1.lcde_start_date,
-                     p1.lcde_contact_value, 
+                     p1.lcde_contact_value,
                      p1.lcde_frv_cme_code);
 --
     FETCH c_aun_code INTO l_cde_refno;
     CLOSE c_aun_code;
    ELSE
-    l_cde_refno := p1.lcde_refno;    
+    l_cde_refno := p1.lcde_refno;
    END IF;
 --
    l_aun_code := p1.lcde_legacy_ref;
@@ -1817,9 +1826,9 @@ BEGIN
 --
   ELSIF (p1.lcde_legacy_type = 'PAR') THEN
 --
-   OPEN c_par_refno(p1.lcde_legacy_ref,    
+   OPEN c_par_refno(p1.lcde_legacy_ref,
                     p1.lcde_start_date,
-                    p1.lcde_contact_value, 
+                    p1.lcde_contact_value,
                     p1.lcde_frv_cme_code);
 --
    FETCH c_par_refno INTO l_cde_refno, l_par_refno;
@@ -1838,15 +1847,15 @@ BEGIN
   ELSIF (p1.lcde_legacy_type = 'PRF') THEN
 --
    IF (p1.lcde_refno IS NULL) THEN
-    OPEN c_prf_refno(p1.lcde_legacy_ref,    
+    OPEN c_prf_refno(p1.lcde_legacy_ref,
                      p1.lcde_start_date,
-                     p1.lcde_contact_value, 
+                     p1.lcde_contact_value,
                      p1.lcde_frv_cme_code);
 --
     FETCH c_prf_refno INTO l_cde_refno;
     CLOSE c_prf_refno;
    ELSE
-    l_cde_refno := p1.lcde_refno;    
+    l_cde_refno := p1.lcde_refno;
    END IF;
 --
    l_par_refno := p1.lcde_legacy_ref;
@@ -1866,7 +1875,7 @@ BEGIN
    OPEN c_bde_refno(p1.lcde_legacy_ref,
                     p1.lcde_secondary_ref,
                     p1.lcde_start_date,
-                    p1.lcde_contact_value, 
+                    p1.lcde_contact_value,
                     p1.lcde_frv_cme_code);
 --
    FETCH c_bde_refno INTO l_cde_refno, l_bde_refno;
@@ -1882,7 +1891,7 @@ BEGIN
 --
    END IF;
 --
-  ELSIF (p1.lcde_legacy_type = 'COS') THEN 
+  ELSIF (p1.lcde_legacy_type = 'COS') THEN
 --
    IF (p1.lcde_refno IS NULL) THEN
     OPEN c_cos_code (p1.lcde_legacy_ref,
@@ -1894,7 +1903,7 @@ BEGIN
     FETCH c_cos_code INTO l_cde_refno;
     CLOSE c_cos_code;
    ELSE
-    l_cde_refno := p1.lcde_refno;    
+    l_cde_refno := p1.lcde_refno;
    END IF;
 --
    l_cos_code    := p1.lcde_legacy_ref;
@@ -1915,7 +1924,7 @@ BEGIN
 --
    OPEN c_srq_refno(p1.lcde_legacy_ref,
                     p1.lcde_start_date,
-                    p1.lcde_contact_value, 
+                    p1.lcde_contact_value,
                     p1.lcde_frv_cme_code);
 --
    FETCH c_srq_refno INTO l_cde_refno, l_srq_no;
@@ -1934,15 +1943,15 @@ BEGIN
   ELSIF (p1.lcde_legacy_type = 'PEG') THEN
 --
    IF (p1.lcde_refno IS NULL) THEN
-    OPEN c_peg_code(p1.lcde_legacy_ref,    
+    OPEN c_peg_code(p1.lcde_legacy_ref,
                     p1.lcde_start_date,
-                    p1.lcde_contact_value, 
+                    p1.lcde_contact_value,
                     p1.lcde_frv_cme_code);
 --
     FETCH c_peg_code INTO l_cde_refno;
     CLOSE c_peg_code;
    ELSE
-    l_cde_refno := p1.lcde_refno;    
+    l_cde_refno := p1.lcde_refno;
    END IF;
 --
    l_peg_code := p1.lcde_legacy_ref;
@@ -1960,9 +1969,9 @@ BEGIN
   ELSIF (p1.lcde_legacy_type = 'ORG') THEN
 --
    OPEN c_org_refno(p1.lcde_legacy_ref,
-                    p1.lcde_secondary_ref,			   
+                    p1.lcde_secondary_ref,
                     p1.lcde_start_date,
-                    p1.lcde_contact_value, 
+                    p1.lcde_contact_value,
                     p1.lcde_frv_cme_code);
 --
    FETCH c_org_refno INTO l_cde_refno, l_par_refno;
@@ -1982,9 +1991,9 @@ BEGIN
 --
    IF (p1.lcde_refno IS NULL OR p1.lcde_oco_refno IS NULL) THEN
     OPEN c_oco_org_refno(p1.lcde_legacy_ref,
-                         p1.lcde_secondary_ref,			   
+                         p1.lcde_secondary_ref,
                          p1.lcde_start_date,
-                         p1.lcde_contact_value, 
+                         p1.lcde_contact_value,
                          p1.lcde_frv_cme_code,
                          p1.lcde_oco_forename,
                          p1.lcde_oco_surname);
@@ -2011,7 +2020,7 @@ BEGIN
    IF (p1.lcde_refno IS NULL OR p1.lcde_oco_refno IS NULL) THEN
     OPEN c_oco_ct2_refno(p1.lcde_legacy_ref,
                          p1.lcde_start_date,
-                         p1.lcde_contact_value, 
+                         p1.lcde_contact_value,
                          p1.lcde_frv_cme_code,
                          p1.lcde_oco_forename,
                          p1.lcde_oco_surname);
@@ -2037,13 +2046,13 @@ BEGIN
 --
 -- Now Perform the Deletes
 --
-  DELETE 
+  DELETE
   FROM contact_details
   WHERE cde_refno = l_cde_refno;
 --
 -- Now need to delete Organisation Contact if created by this process
 --
-  DELETE 
+  DELETE
   FROM organisation_contacts
   WHERE oco_refno = l_oco_refno
   AND p1.lcde_oco_created = 'Y';
@@ -2053,10 +2062,10 @@ BEGIN
   s_dl_process_summary.UPDATE_processed_count(cb,cp,cd,'N');
   set_record_status_flag(l_id,'V');
 --
-  i := i +1; 
+  i := i +1;
 --
-  IF mod(i,1000) = 0 THEN 
-   commit; 
+  IF mod(i,1000) = 0 THEN
+   commit;
   END IF;
 --
   EXCEPTION
@@ -2070,8 +2079,8 @@ BEGIN
 --
  END LOOP;
 --
---                                                                                                                                                                                  
-COMMIT;                                                              
+--
+COMMIT;
 --
 -- Section to analyse the table(s) populated by this dataload
 --
