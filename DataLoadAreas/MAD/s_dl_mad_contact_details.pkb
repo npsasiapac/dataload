@@ -144,7 +144,8 @@ SELECT par_refno
 CURSOR c_org_ct_refno(p_org_short_name   VARCHAR2
                      ,p_org_frv_oty_code VARCHAR2
                      ,p_oco_forename     VARCHAR2
-                     ,p_oco_surname      VARCHAR2) IS
+                     ,p_oco_surname      VARCHAR2
+                     ,p_oco_ocr_code     VARCHAR2) IS
 SELECT oc.oco_refno, oc.oco_par_refno
   FROM parties p
       ,organisation_contacts oc
@@ -154,6 +155,7 @@ SELECT oc.oco_refno, oc.oco_par_refno
    AND p.par_refno = oc.oco_par_refno
    AND oc.oco_forename = p_oco_forename
    AND oc.oco_surname = p_oco_surname
+   AND oc.oco_frv_ocr_code = p_oco_ocr_code
    AND p.par_org_current_ind = 'Y';--3.20
 --
 --
@@ -426,7 +428,8 @@ BEGIN
   ELSIF (p1.lcde_legacy_type = 'OCC') THEN
 --
    OPEN c_org_ct_refno(p1.lcde_legacy_ref,p1.lcde_secondary_ref,
-                       p1.lcde_oco_forename,p1.lcde_oco_surname);
+                       p1.lcde_oco_forename,p1.lcde_oco_surname,
+                       p1.lcde_oco_frv_ocr_code);
    FETCH c_org_ct_refno INTO l_oco_refno,l_org_refno;
    CLOSE c_org_ct_refno;
 --
