@@ -32,11 +32,11 @@
 ##############################################################################
 # Check user parameters
 # Error if less than four parameters
-if [ $# -lt 4 ]
+if [ $# -lt 3 ]
 then
   echo "Error: ($0)"
   echo "Incorrect number of Parameters."
-  echo "Usage: "`basename $0` "logfile houpw fscpw syspw"
+  echo "Usage: "`basename $0` "logfile houpw fscpw"
   echo " "
   exit 1
 fi
@@ -47,7 +47,7 @@ fi
 log="$1"
 HOU_PW=HOU/"$2"
 FSC_PW="FSC"/"$3"
-SYS_PW="SYS"/"$4"
+#SYS_PW="SYS"/"$4"
 rcode=0
 LOGFILE_HOME=$PWD
 INSTALL_HOME=${LOGFILE_HOME}/DataLoadAreas
@@ -386,7 +386,7 @@ esac
 INVALID_PWD="N"
 try_logon $HOU_PW
 try_logon $FSC_PW
-try_logon $SYS_PW
+#try_logon $SYS_PW
 if [ ${INVALID_PWD} = "Y" ]
 then
    exit
@@ -396,7 +396,7 @@ write_rep_hddr; #Write out the report header
 create_dload_dir; #Creates $PROD_HOME/dload directory
 empty_dload_dir; #Removes all from $PROD_HOME/dload directory
 # Grant DBA
-grant_dba;
+#grant_dba;
 run_script     ${LOGFILE_HOME}/scripts   drop_dl.sql
 run_script     ${LOGFILE_HOME}/scripts   enable_pel_triggers.sql
 run_script     ${LOGFILE_HOME}/scripts   enable_aue_triggers.sql
@@ -404,5 +404,5 @@ run_script     ${LOGFILE_HOME}/scripts   advance_hou_sequences.sql
 run_fsc_script ${LOGFILE_HOME}/scripts   advance_fsc_sequences.sql
 run_script     ${LOGFILE_HOME}/scripts   enable_ban_triggers.sql
 run_script     ${LOGFILE_HOME}/scripts   enable_triggers.sql
-run_script_dba ${LOGFILE_HOME}/scripts   drop_gather_stats.sql
-run_script     ${LOGFILE_HOME}/scripts   ins_bru.sql
+#run_script_dba ${LOGFILE_HOME}/scripts   drop_gather_stats.sql
+#run_script     ${LOGFILE_HOME}/scripts   ins_bru.sql
