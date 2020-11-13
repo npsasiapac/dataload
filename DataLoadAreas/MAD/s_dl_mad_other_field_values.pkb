@@ -141,7 +141,7 @@ AS
 --  4.9  6.15      AJ   21-JUN-2017  Changes to allow for ORGTYPE option against Organisations parameter HEM_ORG_OTHERFLDS
 --                                   if set to "TABLE" then as per 6.10 not used if set to ORGTYPE then used
 --  5.0  6.15      AJ   25-JUN-2017  Amended legacy ref for ORGANISATION_CONTACTS around par_refno option
---                                                                        
+--  5.1  6.20      PL   13-NOV-2020  Added 'PAR' into join to Parties                                                                      
 -- ***********************************************************************
 --
 --  declare package variables AND constants
@@ -281,7 +281,8 @@ AS
   IS
     SELECT par_reusable_refno
     FROM   parties
-    WHERE  par_per_alt_ref = p_per_alt_ref;
+    WHERE  par_per_alt_ref = p_per_alt_ref
+    OR 'PAR'||par_refno = p_per_alt_ref; -- PL 
   --*******************
   CURSOR c_get_ltl_refno
     (p_reference VARCHAR2)
@@ -1793,7 +1794,8 @@ AS
   IS
     SELECT par_reusable_refno
     FROM   parties
-    WHERE  par_per_alt_ref = p_per_alt_ref;
+    WHERE  par_per_alt_ref = p_per_alt_ref
+    OR 'PAR'||par_refno = p_per_alt_ref; --PL
   --*******************
   CURSOR c_get_ltl_refno
     (p_reference VARCHAR2)
@@ -1806,7 +1808,8 @@ AS
   IS
     SELECT par_type
     FROM parties
-    WHERE par_per_alt_ref = p_per_alt_ref;
+    WHERE par_per_alt_ref = p_per_alt_ref
+    OR 'PAR'||par_refno = p_per_alt_ref; --PL
   --*******************
   CURSOR c_get_par_type2(p_par_refno VARCHAR2)
   IS
