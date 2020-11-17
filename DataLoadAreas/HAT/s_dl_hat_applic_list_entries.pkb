@@ -310,6 +310,15 @@ SELECT 'X'
 FROM   applications
 WHERE  app_refno = p_app_ref;
 --
+CURSOR C_GET_GEN_ALE_CAT_START_DATE(p_app_alt_ref   VARCHAR2) IS
+   SELECT ale.ale_category_start_date
+     FROM applic_list_entries ale
+    INNER JOIN applications app ON app.app_refno = ale.ale_app_refno
+                               AND app.app_legacy_ref = p_app_alt_ref
+    WHERE ale.ale_rli_code = 'GEN';
+
+l_gen_start_date   applic_list_entries.ale_category_start_date%TYPE;
+    
 -- constants FOR error process
 cb VARCHAR2(30);
 cd DATE;
@@ -487,7 +496,14 @@ END IF;
    THEN
     IF (p1.lale_category_start_date < p1.lale_registered_date)
      THEN
-        l_errors:=s_dl_errors.record_error(cb,cp,cd,ct,cs,'HDL',251);
+        OPEN C_GET_GEN_ALE_CAT_START_DATE(p1.lale_alt_ref);
+        FETCH C_GET_GEN_ALE_CAT_START_DATE INTO l_gen_start_date;
+        CLOSE C_GET_GEN_ALE_CAT_START_DATE;
+     
+        IF TRUNC(p1.lale_category_start_date) != NVL(TRUNC(l_gen_start_date), TO_DATE('01-JAN-1900'))
+        THEN
+           l_errors:=s_dl_errors.record_error(cb,cp,cd,ct,cs,'HDL',251);
+        END IF;
      END IF;
   END IF;
 --
