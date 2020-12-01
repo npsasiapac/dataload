@@ -7,7 +7,8 @@
 --  
 -- Ensure triggers are disabled prior to running update, so that 
 -- History record is not created unnecessarily and CRN is not validated.
-
+ALTER TRIGGER PAR_CRN_BR_IU DISABLE;
+ALTER TRIGGER PAR_AR_U_HOU DISABLE;
 UPDATE parties
 SET    par_per_alt_ref = (SELECT pva_char_value
                           FROM   parameter_values p1
@@ -23,6 +24,9 @@ SET    par_per_alt_ref = (SELECT pva_char_value
                           AND NOT EXISTS (SELECT NULL FROM parties j WHERE j.par_per_alt_ref = pva_char_value))
 WHERE  par_type        = 'HOUP'
 AND    par_per_alt_ref LIKE 'CHCR%';
+
+ALTER TRIGGER PAR_CRN_BR_IU ENABLE;
+ALTER TRIGGER PAR_AR_U_HOU ENABLE;
 
 DELETE FROM parameter_values
 WHERE pva_pdu_pdf_name   = 'CRN'
