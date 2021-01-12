@@ -305,7 +305,7 @@ BEGIN
                  'Text ID' vru_column_1_title,
                  'PVA_CHAR_VALUE' vru_column_2,
                  'Text ID' vru_column_2_title,
-                 'FROM nominations nom INNER JOIN property_elements pel on pel.pel_pro_refno = nom.nom_pro_refno and pel.pel_ele_code LIKE ''GRPHOUSE_%'' AND TRUNC(SYSDATE) BETWEEN TRUNC(pel.pel_start_date) AND NVL(TRUNC(pel.pel_end_date), SYSDATE + 1) INNER JOIN elements ele ON ele.ele_code = pel.pel_ele_code INNER JOIN parameter_values pva ON pva.pva_pdu_pgp_refno = ele.ele_pgp_refno AND pva.pva_pdu_pdf_name = ''TEXT_ID'' AND pva.pva_pdu_pob_table_name = ''NULL'' WHERE nom.nom_refno = NVL(v(''P195_NOM_REFNO''), v(''P135_NOM_REFNO''))' vru_from_clause
+                 'FROM nominations nom INNER JOIN property_elements pel on pel.pel_pro_refno = nom.nom_pro_refno and pel.pel_ele_code LIKE ''GRPHOUSE_%'' AND TRUNC(SYSDATE) BETWEEN TRUNC(pel.pel_start_date) AND NVL(TRUNC(pel.pel_end_date), SYSDATE + 1) INNER JOIN elements ele ON ele.ele_code = pel.pel_ele_code INNER JOIN parameter_values pva ON pva.pva_reusable_refno = pel.pel_reusable_refno AND pva.pva_pdu_pgp_refno = ele.ele_pgp_refno AND pva.pva_pdu_pdf_name = ''TEXT_ID'' AND pva.pva_pdu_pob_table_name = ''NULL'' WHERE nom.nom_refno = NVL(v(''P195_NOM_REFNO''), v(''P135_NOM_REFNO''))' vru_from_clause
             FROM dual) src
       ON (    tgt.vru_name = src.vru_name
           AND tgt.vru_type = src.vru_type
