@@ -11,6 +11,7 @@ begin
      and object_type != 'PACKAGE BODY'
      order by object_type,owner||'.'||object_name)
 --
+
      loop
         execute immediate 'drop '||i.object_type||' '|| i.object_name;
         tname := i.object_name;
@@ -18,7 +19,13 @@ begin
      dbms_output.put_line('drop '||i.object_type||' '|| i.object_name);
      end loop;
   dbms_output.put_line('Objects dropped: '|| ct);
+end;
+/
 
+declare
+tname varchar2(100);
+ct number :=0;
+BEGIN
      for i in (select object_name object_name,owner,object_type from all_objects
      where SUBSTR(object_name,1,3) = 'DL_'
      and object_type = 'SYNONYM'
@@ -26,14 +33,25 @@ begin
      and object_type != 'PACKAGE BODY'
      order by object_type,owner||'.'||object_name)
 --
+
      loop
+        begin
         execute immediate 'drop '||i.owner||' '||i.object_type||' '||i.object_name;
+        exception
+          when others then
+            dbms_output.put_line('FAILED ON drop '||i.owner||' '||i.object_type||' '||i.object_name);
+        end;
         tname := i.object_name;
         ct := ct + 1;
      dbms_output.put_line('drop '||i.owner||' '||i.object_type||' '||i.object_name);
      end loop;
   dbms_output.put_line('Synonyms dropped: '|| ct);
-
+end;
+/
+declare
+tname varchar2(100);
+ct number :=0;
+BEGIN
      for i in (select owner||'.'||object_name object_name,object_type from all_objects
      where SUBSTR(object_name,1,5) = 'S_DL_'
      and object_type NOT IN ('SYNONYM','INDEXES')
@@ -48,6 +66,12 @@ begin
      dbms_output.put_line('drop '||i.object_type||' '|| i.object_name);
      end loop;
   dbms_output.put_line('Packages dropped: '|| ct);
+end;
+/
+declare
+tname varchar2(100);
+ct number :=0;
+BEGIN
 
      for i in (select object_name object_name,owner,object_type from all_objects
      where SUBSTR(object_name,1,5) = 'S_DL_'
