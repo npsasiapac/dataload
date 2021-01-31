@@ -6,11 +6,13 @@ CREATE OR REPLACE PROCEDURE create_assessment(p_assm_refno             IN   asse
                                               p_assm_ato_code          IN   assessments.assm_ato_code%TYPE,
                                               p_assm_ipp_refno         IN   assessments.assm_ipp_refno%TYPE,
                                               p_assm_par_refno         IN   assessments.assm_par_refno%TYPE,
+                                              p_assm_aun_code          IN   assessments.assm_aun_code%TYPE,
                                               p_assm_status_date       IN   assessments.assm_status_date%TYPE,
                                               p_assm_created_by        IN   assessments.assm_created_by%TYPE,
                                               p_assm_created_date      IN   assessments.assm_created_date%TYPE,
                                               p_assm_modified_by       IN   assessments.assm_modified_by%TYPE,
-                                              p_assm_modified_date     IN   assessments.assm_modified_date%TYPE)
+                                              p_assm_modified_date     IN   assessments.assm_modified_date%TYPE,
+                                              p_src_app_refno          IN   applications.app_refno%TYPE)
 IS
 
 BEGIN
@@ -23,11 +25,13 @@ BEGIN
                            assm_assessment_date,
                            assm_ipp_refno,
                            assm_par_refno,
+                           assm_aun_code
                            assm_status_date,
                            assm_created_by,
                            assm_created_date,
                            assm_modified_by,
-                           assm_modified_date)
+                           assm_modified_date,
+                           assm_comments)
                     VALUES(p_assm_refno,
                            p_assm_asst_code,
                            p_assm_sequence,
@@ -37,11 +41,13 @@ BEGIN
                            p_assm_assessment_date,
                            p_assm_ipp_refno,
                            p_assm_par_refno,
+                           p_assm_aun_code,
                            p_assm_status_date,
                            p_assm_created_by,
                            p_assm_created_date,
                            p_assm_modified_by,
-                           p_assm_modified_date);
+                           p_assm_modified_date,
+                           'Source application: ' || p_src_app_refno);
 END create_assessment;
 /
 
@@ -757,7 +763,7 @@ BEGIN
                p_gqre_created_date => p_als_created_date);
                
    create_gqre(p_gqre_assm_refno => p_assm_refno,
-               p_gqre_gque_reference => 195, 
+               p_gqre_gque_reference => 311, 
                p_gqre_gcre_code => p_als_rsd_hrv_lsd_code,
                p_gqre_created_by => p_als_created_by,
                p_gqre_created_date => p_als_created_date);
@@ -798,7 +804,8 @@ END delete_resp_reviewed_assm;
 DECLARE
    CURSOR C_PARTIES_FOR_NEW_ASSESS IS
       SELECT DISTINCT ipa.ipa_par_refno par_refno,
-             ipa.ipa_app_refno app_refno
+             ipa.ipa_app_refno app_refno,
+             REPLACE(app.app_aun_code, 'A-', '') app_aun_code
         FROM applications app
         LEFT JOIN (SELECT app_refno, 
                           'Y' tr_exists_ind
@@ -810,8 +817,6 @@ DECLARE
        INNER JOIN applic_list_stage_decisions als ON als.als_ale_app_refno = app.app_refno
        INNER JOIN involved_parties ipa ON ipa.ipa_app_refno = app.app_refno
                                       AND ipa.ipa_main_applicant_ind = 'Y'
-                                      AND ipa.ipa_app_refno = 1056970
-                                      AND ipa.ipa_par_refno = 4765887
                                       AND TRUNC(SYSDATE) BETWEEN TRUNC(ipa.ipa_start_date) AND NVL(TRUNC(ipa.ipa_end_date), SYSDATE + 1);
                                       
    CURSOR C_STAGE_DECISION_COUNT(p_par_refno   NUMBER,
@@ -934,11 +939,13 @@ BEGIN
                                     p_assm_ato_code => l_als_info.outcome,
                                     p_assm_ipp_refno => 96,
                                     p_assm_par_refno => l_curr_party.par_refno,
+                                    p_assm_aun_code => l_curr_party.app_aun_code,
                                     p_assm_status_date => NVL(l_als_info.decision_date, l_als_info.als_created_date),
                                     p_assm_created_by => l_als_info.als_created_by,
                                     p_assm_created_date => l_als_info.als_created_date,
                                     p_assm_modified_by => l_als_info.als_authorised_by,
-                                    p_assm_modified_date => l_als_info.als_authorised_date);
+                                    p_assm_modified_date => l_als_info.als_authorised_date,
+                                    p_src_app_refno => l_curr_party.app_refno);
                   
                   process_approval_questions(p_assm_refno => l_assm_refno,
                                              p_als_sco_code => l_als_info.als_sco_code,
@@ -963,11 +970,13 @@ BEGIN
                                     p_assm_ato_code => l_als_info.outcome,
                                     p_assm_ipp_refno => 96,
                                     p_assm_par_refno => l_curr_party.par_refno,
+                                    p_assm_aun_code => l_curr_party.app_aun_code,
                                     p_assm_status_date => NVL(l_als_info.decision_date, l_als_info.als_created_date),
                                     p_assm_created_by => l_als_info.als_created_by,
                                     p_assm_created_date => l_als_info.als_created_date,
                                     p_assm_modified_by => l_als_info.als_authorised_by,
-                                    p_assm_modified_date => l_als_info.als_authorised_date);
+                                    p_assm_modified_date => l_als_info.als_authorised_date,
+                                    p_src_app_refno => l_curr_party.app_refno);
                END IF;
              
             ELSIF l_als_info.als_rls_code = 'HNA'
@@ -980,11 +989,13 @@ BEGIN
                                  p_assm_ato_code => NULL,
                                  p_assm_ipp_refno => 96,
                                  p_assm_par_refno => l_curr_party.par_refno,
+                                 p_assm_aun_code => l_curr_party.app_aun_code,
                                  p_assm_status_date => NVL(l_als_info.decision_date, l_als_info.als_created_date),
                                  p_assm_created_by => l_als_info.als_created_by,
                                  p_assm_created_date => l_als_info.als_created_date,
                                  p_assm_modified_by => l_als_info.als_modified_by,
-                                 p_assm_modified_date => l_als_info.als_modified_date);
+                                 p_assm_modified_date => l_als_info.als_modified_date,
+                                 p_src_app_refno => l_curr_party.app_refno);
                
                process_hna_questions(p_app_refno => l_curr_party.app_refno,
                                      p_assm_refno => l_assm_refno,
@@ -1000,6 +1011,7 @@ BEGIN
             ELSIF l_als_info.als_rls_code = 'APPRTR'
             THEN
                IF l_als_info.als_sco_code = 'AUT'
+               THEN
                   create_assessment(p_assm_refno => l_assm_refno,
                                     p_assm_asst_code => 'TRHNA',
                                     p_assm_sequence => 1,
@@ -1008,11 +1020,13 @@ BEGIN
                                     p_assm_ato_code => l_als_info.outcome,
                                     p_assm_ipp_refno => 90,
                                     p_assm_par_refno => l_curr_party.par_refno,
+                                    p_assm_aun_code => l_curr_party.app_aun_code,
                                     p_assm_status_date => NVL(l_als_info.decision_date, l_als_info.als_created_date),
                                     p_assm_created_by => l_als_info.als_created_by,
                                     p_assm_created_date => l_als_info.als_created_date,
                                     p_assm_modified_by => l_als_info.als_authorised_by,
-                                    p_assm_modified_date => l_als_info.als_authorised_date);
+                                    p_assm_modified_date => l_als_info.als_authorised_date,
+                                    p_src_app_refno => l_curr_party.app_refno);
                                     
                   process_apprtr_questions(p_assm_refno => l_assm_refno,
                                            p_als_sco_code => l_als_info.als_sco_code,
@@ -1037,11 +1051,13 @@ BEGIN
                                     p_assm_ato_code => l_als_info.outcome,
                                     p_assm_ipp_refno => 90,
                                     p_assm_par_refno => l_curr_party.par_refno,
+                                    p_assm_aun_code => l_curr_party.app_aun_code,
                                     p_assm_status_date => NVL(l_als_info.decision_date, l_als_info.als_created_date),
                                     p_assm_created_by => l_als_info.als_created_by,
                                     p_assm_created_date => l_als_info.als_created_date,
                                     p_assm_modified_by => l_als_info.als_authorised_by,
-                                    p_assm_modified_date => l_als_info.als_authorised_date);
+                                    p_assm_modified_date => l_als_info.als_authorised_date,
+                                    p_src_app_refno => l_curr_party.app_refno);
                END IF;
             ELSIF l_als_info.als_rls_code = 'HNATR'
             THEN
@@ -1053,11 +1069,13 @@ BEGIN
                                  p_assm_ato_code => NULL,
                                  p_assm_ipp_refno => 90,
                                  p_assm_par_refno => l_curr_party.par_refno,
+                                 p_assm_aun_code => l_curr_party.app_aun_code,
                                  p_assm_status_date => NVL(l_als_info.decision_date, l_als_info.als_created_date),
                                  p_assm_created_by => l_als_info.als_created_by,
                                  p_assm_created_date => l_als_info.als_created_date,
                                  p_assm_modified_by => l_als_info.als_modified_by,
-                                 p_assm_modified_date => l_als_info.als_modified_date);
+                                 p_assm_modified_date => l_als_info.als_modified_date,
+                                 p_src_app_refno => l_curr_party.app_refno);
                                  
                process_hnatr_questions(p_app_refno => l_curr_party.app_refno,
                                        p_assm_refno => l_assm_refno,
@@ -1085,11 +1103,13 @@ BEGIN
                                  p_assm_ato_code => l_als_info.outcome,
                                  p_assm_ipp_refno => 96,
                                  p_assm_par_refno => l_curr_party.par_refno,
+                                 p_assm_aun_code => l_curr_party.app_aun_code,
                                  p_assm_status_date => NVL(l_als_info.decision_date, l_als_info.als_created_date),
                                  p_assm_created_by => l_als_info.als_created_by,
                                  p_assm_created_date => l_als_info.als_created_date,
                                  p_assm_modified_by => NVL(l_als_info.als_modified_by, l_als_info.als_created_by),
-                                 p_assm_modified_date => NVL(l_als_info.als_modified_date, l_als_info.als_created_date));
+                                 p_assm_modified_date => NVL(l_als_info.als_modified_date, l_als_info.als_created_date),
+                                 p_src_app_refno => l_curr_party.app_refno);
                                  
                process_hna_questions(p_app_refno => l_curr_party.app_refno,
                                      p_assm_refno => l_assm_refno,
@@ -1141,11 +1161,13 @@ BEGIN
                                  p_assm_ato_code => l_als_info_clo.outcome,
                                  p_assm_ipp_refno => 96,
                                  p_assm_par_refno => l_curr_party.par_refno,
+                                 p_assm_aun_code => l_curr_party.app_aun_code,
                                  p_assm_status_date => NVL(l_als_info_clo.decision_date, l_als_info_clo.als_created_date),
                                  p_assm_created_by => l_als_info_clo.als_created_by,
                                  p_assm_created_date => l_als_info_clo.als_created_date,
                                  p_assm_modified_by => l_als_info_clo.als_authorised_by,
-                                 p_assm_modified_date => l_als_info_clo.als_authorised_date);
+                                 p_assm_modified_date => l_als_info_clo.als_authorised_date,
+                                 p_src_app_refno => l_curr_party.app_refno);
                                  
                process_approval_questions(p_assm_refno => l_assm_refno,
                                           p_als_sco_code => l_als_info_clo.als_sco_code,
@@ -1168,11 +1190,13 @@ BEGIN
                                  p_assm_ato_code => NULL,
                                  p_assm_ipp_refno => 96,
                                  p_assm_par_refno => l_curr_party.par_refno,
+                                 p_assm_aun_code => l_curr_party.app_aun_code,
                                  p_assm_status_date => NVL(l_als_info.decision_date, l_als_info.als_created_date),
                                  p_assm_created_by => l_als_info.als_created_by,
                                  p_assm_created_date => l_als_info.als_created_date,
                                  p_assm_modified_by => l_als_info.als_modified_by,
-                                 p_assm_modified_date => l_als_info.als_modified_date);
+                                 p_assm_modified_date => l_als_info.als_modified_date,
+                                 p_src_app_refno => l_curr_party.app_refno);
                                  
                process_hna_questions(p_app_refno => l_curr_party.app_refno,
                                      p_assm_refno => l_assm_refno,
@@ -1197,11 +1221,13 @@ BEGIN
                                  p_assm_ato_code => l_als_info.outcome,
                                  p_assm_ipp_refno => 90,
                                  p_assm_par_refno => l_curr_party.par_refno,
+                                 p_assm_aun_code => l_curr_party.app_aun_code,
                                  p_assm_status_date => NVL(l_als_info.decision_date, l_als_info.als_created_date),
                                  p_assm_created_by => l_als_info.als_created_by,
                                  p_assm_created_date => l_als_info.als_created_date,
                                  p_assm_modified_by => NVL(l_als_info.als_modified_by, l_als_info.als_created_by),
-                                 p_assm_modified_date => NVL(l_als_info.als_modified_date, l_als_info.als_created_date));
+                                 p_assm_modified_date => NVL(l_als_info.als_modified_date, l_als_info.als_created_date),
+                                 p_src_app_refno => l_curr_party.app_refno);
                                  
                process_hnatr_questions(p_app_refno => l_curr_party.app_refno,
                                        p_assm_refno => l_assm_refno,
@@ -1253,11 +1279,13 @@ BEGIN
                                  p_assm_ato_code => l_als_info_clo.outcome,
                                  p_assm_ipp_refno => 90,
                                  p_assm_par_refno => l_curr_party.par_refno,
+                                 p_assm_aun_code => l_curr_party.app_aun_code,
                                  p_assm_status_date => NVL(l_als_info_clo.decision_date, l_als_info_clo.als_created_date),
                                  p_assm_created_by => l_als_info_clo.als_created_by,
                                  p_assm_created_date => l_als_info_clo.als_created_date,
                                  p_assm_modified_by => l_als_info_clo.als_authorised_by,
-                                 p_assm_modified_date => l_als_info_clo.als_authorised_date);
+                                 p_assm_modified_date => l_als_info_clo.als_authorised_date,
+                                 p_src_app_refno => l_curr_party.app_refno);
                                  
                process_apprtr_questions(p_assm_refno => l_assm_refno,
                                         p_als_sco_code => l_als_info_clo.als_sco_code,
@@ -1280,11 +1308,13 @@ BEGIN
                                  p_assm_ato_code => NULL,
                                  p_assm_ipp_refno => 90,
                                  p_assm_par_refno => l_curr_party.par_refno,
+                                 p_assm_aun_code => l_curr_party.app_aun_code,
                                  p_assm_status_date => NVL(l_als_info.decision_date, l_als_info.als_created_date),
                                  p_assm_created_by => l_als_info.als_created_by,
                                  p_assm_created_date => l_als_info.als_created_date,
                                  p_assm_modified_by => l_als_info.als_modified_by,
-                                 p_assm_modified_date => l_als_info.als_modified_date);
+                                 p_assm_modified_date => l_als_info.als_modified_date,
+                                 p_src_app_refno => l_curr_party.app_refno);
                                  
                process_hnatr_questions(p_app_refno => l_curr_party.app_refno,
                                        p_assm_refno => l_assm_refno,
@@ -1305,6 +1335,8 @@ WHEN OTHERS THEN
    dbms_output.put_line(SQLERRM);
 END;
 /
+
+COMMIT;
 
 DROP PROCEDURE process_hnatr_questions;
 DROP PROCEDURE process_hna_questions;
