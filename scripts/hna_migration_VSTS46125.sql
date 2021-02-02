@@ -25,7 +25,7 @@ BEGIN
                            assm_assessment_date,
                            assm_ipp_refno,
                            assm_par_refno,
-                           assm_aun_code
+                           assm_aun_code,
                            assm_status_date,
                            assm_created_by,
                            assm_created_date,
@@ -577,6 +577,11 @@ BEGIN
                   p_gqre_boolean_value => 'Y',
                   p_gqre_created_by => p_als_auth_by,
                   p_gqre_created_date => p_als_auth_date);
+                  
+      UPDATE generic_question_responses
+         SET gqre_created_date = p_als_auth_date
+       WHERE gqre_assm_refno = p_assm_refno
+         AND gqre_gque_reference = 294;
    END IF;
 END process_hna_questions;
 /
@@ -784,6 +789,11 @@ BEGIN
                   p_gqre_boolean_value => 'Y',
                   p_gqre_created_by => p_als_auth_by,
                   p_gqre_created_date => p_als_auth_date);
+      
+      UPDATE generic_question_responses
+         SET gqre_created_date = p_als_auth_date
+       WHERE gqre_assm_refno = p_assm_refno
+         AND gqre_gque_reference = 294;
    END IF;
 END process_hnatr_questions;
 /
@@ -799,6 +809,23 @@ BEGIN
                                FROM assessments
                               WHERE assm_assm_refno = p_assm_refno);
 END delete_resp_reviewed_assm;
+/
+
+CREATE OR REPLACE PROCEDURE update_assessment(p_assm_refno         IN   assessments.assm_refno%TYPE,
+                                              p_assm_status_date   IN   assessments.assm_status_date%TYPE DEFAULT NULL,
+                                              p_assm_created_date  IN   assessments.assm_created_date%TYPE DEFAULT NULL,
+                                              p_assm_modified_date IN   assessments.assm_modified_date%TYPE DEFAULT NULL,
+                                              p_assm_modified_by   IN   assessments.assm_modified_by%TYPE DEFAULT NULL)
+IS
+
+BEGIN
+   UPDATE assessments
+      SET assm_status_date = NVL(p_assm_status_date, assm_status_date),
+          assm_created_date = NVL(p_assm_created_date, assm_created_date),
+          assm_modified_date = NVL(p_assm_modified_date, assm_modified_date),
+          assm_modified_by = NVL(p_assm_modified_by, assm_modified_by)
+    WHERE assm_refno = p_assm_refno;
+END update_assessment;
 /
 
 DECLARE
@@ -875,6 +902,7 @@ DECLARE
              als.als_rsd_hrv_lsd_code outcome,
              als.als_hrv_sdr_code reason,
              als.als_decision_date decision_date,
+             als.als_status_date,
              als.als_comments,
              app.app_aun_code,
              als.als_created_by,
@@ -940,7 +968,7 @@ BEGIN
                                     p_assm_ipp_refno => 96,
                                     p_assm_par_refno => l_curr_party.par_refno,
                                     p_assm_aun_code => l_curr_party.app_aun_code,
-                                    p_assm_status_date => NVL(l_als_info.decision_date, l_als_info.als_created_date),
+                                    p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
                                     p_assm_created_by => l_als_info.als_created_by,
                                     p_assm_created_date => l_als_info.als_created_date,
                                     p_assm_modified_by => l_als_info.als_authorised_by,
@@ -971,7 +999,7 @@ BEGIN
                                     p_assm_ipp_refno => 96,
                                     p_assm_par_refno => l_curr_party.par_refno,
                                     p_assm_aun_code => l_curr_party.app_aun_code,
-                                    p_assm_status_date => NVL(l_als_info.decision_date, l_als_info.als_created_date),
+                                    p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
                                     p_assm_created_by => l_als_info.als_created_by,
                                     p_assm_created_date => l_als_info.als_created_date,
                                     p_assm_modified_by => l_als_info.als_authorised_by,
@@ -990,7 +1018,7 @@ BEGIN
                                  p_assm_ipp_refno => 96,
                                  p_assm_par_refno => l_curr_party.par_refno,
                                  p_assm_aun_code => l_curr_party.app_aun_code,
-                                 p_assm_status_date => NVL(l_als_info.decision_date, l_als_info.als_created_date),
+                                 p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
                                  p_assm_created_by => l_als_info.als_created_by,
                                  p_assm_created_date => l_als_info.als_created_date,
                                  p_assm_modified_by => l_als_info.als_modified_by,
@@ -1021,7 +1049,7 @@ BEGIN
                                     p_assm_ipp_refno => 90,
                                     p_assm_par_refno => l_curr_party.par_refno,
                                     p_assm_aun_code => l_curr_party.app_aun_code,
-                                    p_assm_status_date => NVL(l_als_info.decision_date, l_als_info.als_created_date),
+                                    p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
                                     p_assm_created_by => l_als_info.als_created_by,
                                     p_assm_created_date => l_als_info.als_created_date,
                                     p_assm_modified_by => l_als_info.als_authorised_by,
@@ -1052,7 +1080,7 @@ BEGIN
                                     p_assm_ipp_refno => 90,
                                     p_assm_par_refno => l_curr_party.par_refno,
                                     p_assm_aun_code => l_curr_party.app_aun_code,
-                                    p_assm_status_date => NVL(l_als_info.decision_date, l_als_info.als_created_date),
+                                    p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
                                     p_assm_created_by => l_als_info.als_created_by,
                                     p_assm_created_date => l_als_info.als_created_date,
                                     p_assm_modified_by => l_als_info.als_authorised_by,
@@ -1070,7 +1098,7 @@ BEGIN
                                  p_assm_ipp_refno => 90,
                                  p_assm_par_refno => l_curr_party.par_refno,
                                  p_assm_aun_code => l_curr_party.app_aun_code,
-                                 p_assm_status_date => NVL(l_als_info.decision_date, l_als_info.als_created_date),
+                                 p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
                                  p_assm_created_by => l_als_info.als_created_by,
                                  p_assm_created_date => l_als_info.als_created_date,
                                  p_assm_modified_by => l_als_info.als_modified_by,
@@ -1104,7 +1132,7 @@ BEGIN
                                  p_assm_ipp_refno => 96,
                                  p_assm_par_refno => l_curr_party.par_refno,
                                  p_assm_aun_code => l_curr_party.app_aun_code,
-                                 p_assm_status_date => NVL(l_als_info.decision_date, l_als_info.als_created_date),
+                                 p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
                                  p_assm_created_by => l_als_info.als_created_by,
                                  p_assm_created_date => l_als_info.als_created_date,
                                  p_assm_modified_by => NVL(l_als_info.als_modified_by, l_als_info.als_created_by),
@@ -1162,7 +1190,7 @@ BEGIN
                                  p_assm_ipp_refno => 96,
                                  p_assm_par_refno => l_curr_party.par_refno,
                                  p_assm_aun_code => l_curr_party.app_aun_code,
-                                 p_assm_status_date => NVL(l_als_info_clo.decision_date, l_als_info_clo.als_created_date),
+                                 p_assm_status_date => NVL(l_als_info_clo.als_status_date, l_als_info_clo.als_created_date),
                                  p_assm_created_by => l_als_info_clo.als_created_by,
                                  p_assm_created_date => l_als_info_clo.als_created_date,
                                  p_assm_modified_by => l_als_info_clo.als_authorised_by,
@@ -1191,7 +1219,7 @@ BEGIN
                                  p_assm_ipp_refno => 96,
                                  p_assm_par_refno => l_curr_party.par_refno,
                                  p_assm_aun_code => l_curr_party.app_aun_code,
-                                 p_assm_status_date => NVL(l_als_info.decision_date, l_als_info.als_created_date),
+                                 p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
                                  p_assm_created_by => l_als_info.als_created_by,
                                  p_assm_created_date => l_als_info.als_created_date,
                                  p_assm_modified_by => l_als_info.als_modified_by,
@@ -1222,7 +1250,7 @@ BEGIN
                                  p_assm_ipp_refno => 90,
                                  p_assm_par_refno => l_curr_party.par_refno,
                                  p_assm_aun_code => l_curr_party.app_aun_code,
-                                 p_assm_status_date => NVL(l_als_info.decision_date, l_als_info.als_created_date),
+                                 p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
                                  p_assm_created_by => l_als_info.als_created_by,
                                  p_assm_created_date => l_als_info.als_created_date,
                                  p_assm_modified_by => NVL(l_als_info.als_modified_by, l_als_info.als_created_by),
@@ -1280,7 +1308,7 @@ BEGIN
                                  p_assm_ipp_refno => 90,
                                  p_assm_par_refno => l_curr_party.par_refno,
                                  p_assm_aun_code => l_curr_party.app_aun_code,
-                                 p_assm_status_date => NVL(l_als_info_clo.decision_date, l_als_info_clo.als_created_date),
+                                 p_assm_status_date => NVL(l_als_info_clo.als_status_date, l_als_info_clo.als_created_date),
                                  p_assm_created_by => l_als_info_clo.als_created_by,
                                  p_assm_created_date => l_als_info_clo.als_created_date,
                                  p_assm_modified_by => l_als_info_clo.als_authorised_by,
@@ -1309,7 +1337,7 @@ BEGIN
                                  p_assm_ipp_refno => 90,
                                  p_assm_par_refno => l_curr_party.par_refno,
                                  p_assm_aun_code => l_curr_party.app_aun_code,
-                                 p_assm_status_date => NVL(l_als_info.decision_date, l_als_info.als_created_date),
+                                 p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
                                  p_assm_created_by => l_als_info.als_created_by,
                                  p_assm_created_date => l_als_info.als_created_date,
                                  p_assm_modified_by => l_als_info.als_modified_by,
@@ -1336,7 +1364,314 @@ WHEN OTHERS THEN
 END;
 /
 
-COMMIT;
+ALTER TRIGGER ASSM_BR_U DISABLE;
+
+DECLARE
+   CURSOR C_PARTIES_FOR_NEW_ASSESS IS
+      SELECT DISTINCT ipa.ipa_par_refno par_refno,
+             ipa.ipa_app_refno app_refno,
+             REPLACE(app.app_aun_code, 'A-', '') app_aun_code
+        FROM applications app
+        LEFT JOIN (SELECT app_refno, 
+                          'Y' tr_exists_ind
+                     FROM applications
+                    WHERE EXISTS (SELECT NULL
+                                    FROM applic_list_entries 
+                                   WHERE ale_rli_code = 'TR' 
+                                     AND ale_app_refno = app_refno)) apptr ON apptr.app_refno = app.app_refno
+       INNER JOIN applic_list_stage_decisions als ON als.als_ale_app_refno = app.app_refno
+       INNER JOIN involved_parties ipa ON ipa.ipa_app_refno = app.app_refno
+                                      AND ipa.ipa_main_applicant_ind = 'Y'
+                                      AND TRUNC(SYSDATE) BETWEEN TRUNC(ipa.ipa_start_date) AND NVL(TRUNC(ipa.ipa_end_date), SYSDATE + 1);
+                                      
+   CURSOR C_STAGE_DECISION_COUNT(p_par_refno   NUMBER,
+                                 p_app_refno   NUMBER) IS
+      SELECT COUNT(*)
+        FROM applications app
+        LEFT JOIN (SELECT app_refno, 
+                          'Y' tr_exists_ind
+                     FROM applications
+                    WHERE EXISTS (SELECT NULL
+                                    FROM applic_list_entries 
+                                   WHERE ale_rli_code = 'TR' 
+                                     AND ale_app_refno = app_refno)) apptr ON apptr.app_refno = app.app_refno
+       INNER JOIN applic_list_stage_decisions als ON als.als_ale_app_refno = app.app_refno
+       INNER JOIN involved_parties ipa ON ipa.ipa_app_refno = app.app_refno
+                                      AND ipa.ipa_par_refno = p_par_refno
+                                      AND ipa.ipa_main_applicant_ind = 'Y'
+                                      AND TRUNC(SYSDATE) BETWEEN TRUNC(ipa.ipa_start_date) AND NVL(TRUNC(ipa.ipa_end_date), SYSDATE + 1)
+       WHERE app.app_refno = p_app_refno; 
+                                      
+   CURSOR C_LAST_ALS_INFO(p_par_refno   NUMBER,
+                          p_app_refno   NUMBER) IS
+      SELECT als.als_rls_code,
+             als.als_sco_code,
+             als.als_rsd_hrv_lsd_code outcome,
+             als.als_hrv_sdr_code reason,
+             als.als_decision_date decision_date,
+             als.als_comments,
+             app.app_aun_code,
+             als.als_created_by,
+             als.als_created_date,
+             als.als_modified_by,
+             als.als_modified_date,
+             als.als_authorised_by,
+             als.als_authorised_date
+        FROM applications app
+        LEFT JOIN (SELECT app_refno, 
+                          'Y' tr_exists_ind
+                     FROM applications
+                    WHERE EXISTS (SELECT NULL
+                                    FROM applic_list_entries 
+                                   WHERE ale_rli_code = 'TR' 
+                                     AND ale_app_refno = app_refno)) apptr ON apptr.app_refno = app.app_refno
+       INNER JOIN applic_list_stage_decisions als ON als.als_ale_app_refno = app.app_refno
+       INNER JOIN involved_parties ipa ON ipa.ipa_app_refno = app.app_refno
+                                      AND ipa.ipa_par_refno = p_par_refno
+                                      AND ipa.ipa_main_applicant_ind = 'Y'
+                                      AND TRUNC(SYSDATE) BETWEEN TRUNC(ipa.ipa_start_date) AND NVL(TRUNC(ipa.ipa_end_date), SYSDATE + 1)
+       WHERE app.app_refno = p_app_refno
+       ORDER BY NVL(als_modified_date, als_created_date) DESC; 
+       
+   CURSOR C_FIRST_ALS_INFO(p_par_refno   NUMBER,
+                           p_app_refno   NUMBER) IS
+      SELECT als.als_rls_code,
+             als.als_sco_code,
+             als.als_rsd_hrv_lsd_code outcome,
+             als.als_hrv_sdr_code reason,
+             als.als_decision_date decision_date,
+             als.als_status_date,
+             als.als_comments,
+             app.app_aun_code,
+             als.als_created_by,
+             als.als_created_date,
+             als.als_modified_by,
+             als.als_modified_date,
+             als.als_authorised_by,
+             als.als_authorised_date
+        FROM applications app
+        LEFT JOIN (SELECT app_refno, 
+                          'Y' tr_exists_ind
+                     FROM applications
+                    WHERE EXISTS (SELECT NULL
+                                    FROM applic_list_entries 
+                                   WHERE ale_rli_code = 'TR' 
+                                     AND ale_app_refno = app_refno)) apptr ON apptr.app_refno = app.app_refno
+       INNER JOIN applic_list_stage_decisions als ON als.als_ale_app_refno = app.app_refno
+       INNER JOIN involved_parties ipa ON ipa.ipa_app_refno = app.app_refno
+                                      AND ipa.ipa_par_refno = p_par_refno
+                                      AND ipa.ipa_main_applicant_ind = 'Y'
+                                      AND TRUNC(SYSDATE) BETWEEN TRUNC(ipa.ipa_start_date) AND NVL(TRUNC(ipa.ipa_end_date), SYSDATE + 1)
+       WHERE app.app_refno = p_app_refno
+       ORDER BY NVL(als_modified_date, als_created_date); 
+       
+   CURSOR C_CURR_ASSM(p_app_refno       IN   NUMBER,
+                      p_assm_sco_code   IN   VARCHAR2) IS
+      SELECT assm_refno
+        FROM assessments
+       WHERE assm_comments = 'Source application: ' || p_app_refno
+         AND assm_sco_code = p_assm_sco_code;
+  
+   l_count         NUMBER(10);
+   l_als_info      C_LAST_ALS_INFO%ROWTYPE;
+   l_als_info_clo  C_FIRST_ALS_INFO%ROWTYPE;
+   l_assm_refno    assessments.assm_refno%TYPE;
+   l_curr_status   applic_list_stage_decisions.als_sco_code%TYPE;
+   
+BEGIN
+   FOR l_curr_party IN C_PARTIES_FOR_NEW_ASSESS
+   LOOP
+      l_count := 0;
+      
+      OPEN C_STAGE_DECISION_COUNT(l_curr_party.par_refno,
+                                  l_curr_party.app_refno);
+      FETCH C_STAGE_DECISION_COUNT INTO l_count;
+      CLOSE C_STAGE_DECISION_COUNT;
+      
+      OPEN C_LAST_ALS_INFO(l_curr_party.par_refno,
+                           l_curr_party.app_refno);
+      FETCH C_LAST_ALS_INFO INTO l_als_info;
+      CLOSE C_LAST_ALS_INFO;
+      
+      IF l_count < 3
+      THEN         
+         IF l_count = 1
+         THEN
+            
+            IF l_als_info.als_rls_code = 'APPROVAL'
+            THEN
+               IF l_als_info.als_sco_code = 'AUT'
+               THEN
+                  OPEN C_CURR_ASSM(l_curr_party.app_refno,
+                                   'CLO');
+                  FETCH C_CURR_ASSM INTO l_assm_refno;
+                  CLOSE C_CURR_ASSM;
+                 
+                  update_assessment(p_assm_refno => l_assm_refno, 
+                                    p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
+                                    p_assm_created_date => l_als_info.als_created_date,
+                                    p_assm_modified_date => l_als_info.als_authorised_date,
+                                    p_assm_modified_by => l_als_info.als_authorised_by);
+                 
+               ELSE
+                  OPEN C_CURR_ASSM(l_curr_party.app_refno,
+                                   'PEN');
+                  FETCH C_CURR_ASSM INTO l_assm_refno;
+                  CLOSE C_CURR_ASSM;
+                  
+                  update_assessment(p_assm_refno => l_assm_refno, 
+                                    p_assm_created_date => l_als_info.als_created_date,
+                                    p_assm_modified_date => l_als_info.als_authorised_date,
+                                    p_assm_modified_by => l_als_info.als_authorised_by);
+               END IF;
+             
+            ELSIF l_als_info.als_rls_code = 'HNA'
+            THEN
+               OPEN C_CURR_ASSM(l_curr_party.app_refno,
+                                'PEN');
+               FETCH C_CURR_ASSM INTO l_assm_refno;
+               CLOSE C_CURR_ASSM;
+               
+               update_assessment(p_assm_refno => l_assm_refno, 
+                                 p_assm_created_date => l_als_info.als_created_date,
+                                 p_assm_modified_date => l_als_info.als_modified_date,
+                                 p_assm_modified_by => l_als_info.als_modified_by);
+            ELSIF l_als_info.als_rls_code = 'APPRTR'
+            THEN
+               IF l_als_info.als_sco_code = 'AUT'
+               THEN
+                  OPEN C_CURR_ASSM(l_curr_party.app_refno,
+                                   'CLO');
+                  FETCH C_CURR_ASSM INTO l_assm_refno;
+                  CLOSE C_CURR_ASSM;
+                  
+                  update_assessment(p_assm_refno => l_assm_refno,
+                                    p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
+                                    p_assm_created_date => l_als_info.als_created_date,
+                                    p_assm_modified_date => l_als_info.als_authorised_date,
+                                    p_assm_modified_by => l_als_info.als_authorised_by);
+               ELSE
+                  OPEN C_CURR_ASSM(l_curr_party.app_refno,
+                                   'PEN');
+                  FETCH C_CURR_ASSM INTO l_assm_refno;
+                  CLOSE C_CURR_ASSM;
+                  
+                  update_assessment(p_assm_refno => l_assm_refno,
+                                    p_assm_created_date => l_als_info.als_created_date,
+                                    p_assm_modified_date => l_als_info.als_authorised_date,
+                                    p_assm_modified_by => l_als_info.als_authorised_by);
+               END IF;
+            ELSIF l_als_info.als_rls_code = 'HNATR'
+            THEN
+               OPEN C_CURR_ASSM(l_curr_party.app_refno,
+                                'PEN');
+               FETCH C_CURR_ASSM INTO l_assm_refno;
+               CLOSE C_CURR_ASSM;
+               
+               update_assessment(p_assm_refno => l_assm_refno,
+                                 p_assm_created_date => l_als_info.als_created_date,
+                                 p_assm_modified_date => l_als_info.als_modified_date,
+                                 p_assm_modified_by => l_als_info.als_modified_by);
+            END IF;
+         ELSIF l_count = 2
+         THEN
+            IF l_als_info.als_rls_code = 'APPROVAL'
+            THEN
+               l_curr_status := CASE l_als_info.als_sco_code
+                                    WHEN 'PEN' THEN 'PEN'
+                                    WHEN 'AUT' THEN 'CLO'
+                                 END;
+               
+               OPEN C_CURR_ASSM(l_curr_party.app_refno,
+                                l_curr_status);
+               FETCH C_CURR_ASSM INTO l_assm_refno;
+               CLOSE C_CURR_ASSM;
+               
+               update_assessment(p_assm_refno => l_assm_refno,
+                                 p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
+                                 p_assm_created_date => l_als_info.als_created_date,
+                                 p_assm_modified_date => NVL(l_als_info.als_modified_date, l_als_info.als_created_date),
+                                 p_assm_modified_by => NVL(l_als_info.als_modified_by, l_als_info.als_created_by));
+            ELSIF l_als_info.als_rls_code = 'HNA'
+            THEN
+               OPEN C_FIRST_ALS_INFO(l_curr_party.par_refno,
+                                     l_curr_party.app_refno);
+               FETCH C_FIRST_ALS_INFO INTO l_als_info_clo;
+               CLOSE C_FIRST_ALS_INFO;
+               
+               OPEN C_CURR_ASSM(l_curr_party.app_refno,
+                                'CLO');
+               FETCH C_CURR_ASSM INTO l_assm_refno;
+               CLOSE C_CURR_ASSM;
+               
+               update_assessment(p_assm_refno => l_assm_refno,
+                                 p_assm_status_date => NVL(l_als_info_clo.als_status_date, l_als_info_clo.als_created_date),
+                                 p_assm_created_date => l_als_info_clo.als_created_date,
+                                 p_assm_modified_date => l_als_info_clo.als_authorised_date,
+                                 p_assm_modified_by => l_als_info_clo.als_authorised_by);
+               
+               OPEN C_CURR_ASSM(l_curr_party.app_refno,
+                                'PEN');
+               FETCH C_CURR_ASSM INTO l_assm_refno;
+               CLOSE C_CURR_ASSM;
+               
+               update_assessment(p_assm_refno => l_assm_refno,
+                                 p_assm_created_date => l_als_info.als_created_date,
+                                 p_assm_modified_date => l_als_info.als_modified_date,
+                                 p_assm_modified_by => l_als_info.als_modified_by);
+            ELSIF l_als_info.als_rls_code = 'APPRTR'
+            THEN
+               l_curr_status := CASE l_als_info.als_sco_code
+                                    WHEN 'PEN' THEN 'PEN'
+                                    WHEN 'AUT' THEN 'CLO'
+                                 END;
+               
+               OPEN C_CURR_ASSM(l_curr_party.app_refno,
+                                l_curr_status);
+               FETCH C_CURR_ASSM INTO l_assm_refno;
+               CLOSE C_CURR_ASSM;
+               
+               update_assessment(p_assm_refno => l_assm_refno,
+                                 p_assm_created_date => l_als_info.als_created_date,
+                                 p_assm_modified_date => l_als_info.als_modified_date,
+                                 p_assm_modified_by => l_als_info.als_modified_by);
+            ELSIF l_als_info.als_rls_code = 'HNATR'
+            THEN
+               OPEN C_FIRST_ALS_INFO(l_curr_party.par_refno,
+                                     l_curr_party.app_refno);
+               FETCH C_FIRST_ALS_INFO INTO l_als_info_clo;
+               CLOSE C_FIRST_ALS_INFO;
+               
+               OPEN C_CURR_ASSM(l_curr_party.app_refno,
+                                'CLO');
+               FETCH C_CURR_ASSM INTO l_assm_refno;
+               CLOSE C_CURR_ASSM;
+               
+               update_assessment(p_assm_refno => l_assm_refno,
+                                 p_assm_created_date => l_als_info_clo.als_created_date,
+                                 p_assm_modified_date => l_als_info_clo.als_modified_date,
+                                 p_assm_modified_by => l_als_info_clo.als_modified_by);
+               
+               OPEN C_CURR_ASSM(l_curr_party.app_refno,
+                                'PEN');
+               FETCH C_CURR_ASSM INTO l_assm_refno;
+               CLOSE C_CURR_ASSM;
+               
+               update_assessment(p_assm_refno => l_assm_refno,
+                                 p_assm_created_date => l_als_info.als_created_date,
+                                 p_assm_modified_date => l_als_info.als_modified_date,
+                                 p_assm_modified_by => l_als_info.als_modified_by);
+            END IF;
+         END IF;
+      END IF;
+   END LOOP;
+EXCEPTION
+WHEN OTHERS THEN
+   dbms_output.put_line(SQLERRM);
+END;
+/
+
+ALTER TRIGGER ASSM_BR_U ENABLE;
 
 DROP PROCEDURE process_hnatr_questions;
 DROP PROCEDURE process_hna_questions;
