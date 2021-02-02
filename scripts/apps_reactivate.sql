@@ -32,8 +32,7 @@ IS
          AND NOT EXISTS (SELECT null 
                            FROM involved_parties ipa2
                           INNER JOIN applications app ON app.app_refno = ipa2.ipa_app_refno
-                                                     AND app.app_refno = ipa2.ipa_app_refno 
-                                                     AND app.app_sco_code in ('CUR','NEW')
+                                                     AND app.app_sco_code IN ('CUR','NEW')
                           WHERE ipa2.ipa_app_refno != ipa.ipa_app_refno 
                             AND ipa2.ipa_par_refno = ipa.ipa_par_refno
                             AND ipa2.ipa_main_applicant_ind = 'Y' 
