@@ -59,11 +59,14 @@ CREATE OR REPLACE PROCEDURE create_gqre(p_gqre_assm_refno       IN   generic_que
                                         p_gqre_text_value       IN   generic_question_responses.gqre_text_value%TYPE     DEFAULT NULL,
                                         p_gqre_gcre_code        IN   generic_question_responses.gqre_gcre_code%TYPE      DEFAULT NULL,
                                         p_gqre_created_by       IN   generic_question_responses.gqre_created_by%TYPE     DEFAULT NULL,
-                                        p_gqre_created_date     IN   generic_question_responses.gqre_created_date%TYPE   DEFAULT NULL)
+                                        p_gqre_created_date     IN   generic_question_responses.gqre_created_date%TYPE   DEFAULT NULL,
+                                        p_gqre_modified_by      IN   generic_question_responses.gqre_modified_by%TYPE    DEFAULT NULL,
+                                        p_gqre_modified_date    IN   generic_question_responses.gqre_modified_date%TYPE  DEFAULT NULL)
 IS
 
 BEGIN
-   INSERT INTO generic_question_responses(gqre_class,
+   INSERT INTO generic_question_responses(gqre_refno,
+                                          gqre_class,
                                           gqre_assm_refno,
                                           gqre_arc_object,
                                           gqre_gque_reference,
@@ -74,56 +77,68 @@ BEGIN
                                           gqre_gcre_code,
                                           gqre_created_by,
                                           gqre_created_date)
-                                          SELECT gque_class,
-                                                 p_gqre_assm_refno,
-                                                 'ASSM',
-                                                 gque_reference,
-                                                 p_gqre_boolean_value,
-                                                 p_gqre_date_value,
-                                                 p_gqre_numeric_value,
-                                                 SUBSTR(p_gqre_text_value, 1, 2000),
-                                                 p_gqre_gcre_code,
-                                                 p_gqre_created_by,
-                                                 p_gqre_created_date
-                                            FROM generic_questions
-                                           WHERE gque_reference = p_gqre_gque_reference;
+                                          SELECT gqre_refno_seq.NEXTVAL,
+                                                 s.*
+                                            FROM (SELECT gque_class,
+                                                         p_gqre_assm_refno,
+                                                         'ASSM',
+                                                         gque_reference,
+                                                         p_gqre_boolean_value,
+                                                         p_gqre_date_value,
+                                                         p_gqre_numeric_value,
+                                                         SUBSTR(p_gqre_text_value, 1, 2000),
+                                                         p_gqre_gcre_code,
+                                                         p_gqre_created_by,
+                                                         p_gqre_created_date
+                                                    FROM generic_questions
+                                                   WHERE gque_reference = p_gqre_gque_reference) s;
+   
+   UPDATE generic_question_responses
+      SET gqre_created_by = NVL(p_gqre_created_by, gqre_created_by),
+          gqre_created_date = NVL(p_gqre_created_date, gqre_created_date),
+          gqre_modified_by = NVL(p_gqre_modified_by, gqre_modified_by),
+          gqre_modified_date = NVL(p_gqre_modified_date, gqre_modified_date)
+    WHERE gqre_assm_refno = p_gqre_assm_refno
+      AND gqre_gque_reference = p_gqre_gque_reference;
 END create_gqre;
 /
 
 CREATE OR REPLACE PROCEDURE generate_answer_comments(p_app_refno             IN   applications.app_refno%TYPE                         DEFAULT NULL,
                                                      p_que_refno             IN   questions.que_refno%TYPE                            DEFAULT NULL,
                                                      p_gqre_assm_refno       IN   generic_question_responses.gqre_assm_refno%TYPE     DEFAULT NULL,
-                                                     p_gqre_gque_reference   IN   generic_question_responses.gqre_gque_reference%TYPE DEFAULT NULL, 
-                                                     p_gqre_created_by       IN   generic_question_responses.gqre_created_by%TYPE     DEFAULT NULL,
-                                                     p_gqre_created_date     IN   generic_question_responses.gqre_created_date%TYPE   DEFAULT NULL)
+                                                     p_gqre_gque_reference   IN   generic_question_responses.gqre_gque_reference%TYPE DEFAULT NULL)
 IS
-   l_answer   generic_question_responses.gqre_text_value%TYPE;
-   
    CURSOR C_ANSWER_VALUE IS
-      SELECT gan.gan_char_value || DECODE(gan.gan_comments, NULL, '', ' ') || gan.gan_comments
+      SELECT gan.gan_char_value || DECODE(gan.gan_comments, NULL, '', ' ') || gan.gan_comments text_value,
+             gan.gan_created_by,
+             gan.gan_created_date,
+             gan.gan_modified_by,
+             gan.gan_modified_date
         FROM general_answers gan
        INNER JOIN questions que ON que.que_refno = gan.gan_que_refno
        WHERE gan.gan_app_refno = p_app_refno
          AND gan.gan_que_refno = p_que_refno;
+         
+   l_values C_ANSWER_VALUE%ROWTYPE;
 BEGIN
    OPEN C_ANSWER_VALUE;
-   FETCH C_ANSWER_VALUE INTO l_answer;
+   FETCH C_ANSWER_VALUE INTO l_values;
    CLOSE C_ANSWER_VALUE;
    
    create_gqre(p_gqre_assm_refno => p_gqre_assm_refno,
                p_gqre_gque_reference => p_gqre_gque_reference,
-               p_gqre_text_value => l_answer,
-               p_gqre_created_by => p_gqre_created_by,
-               p_gqre_created_date => p_gqre_created_date);
+               p_gqre_text_value => l_values.text_value,
+               p_gqre_created_by => l_values.gan_created_by,
+               p_gqre_created_date => l_values.gan_created_date,
+               p_gqre_modified_by => l_values.gan_modified_by,
+               p_gqre_modified_date => l_values.gan_modified_date);
 END generate_answer_comments;
 /
 
 CREATE OR REPLACE PROCEDURE create_gqre_from_app(p_app_refno             IN   applications.app_refno%TYPE                         DEFAULT NULL,
                                                  p_que_refno             IN   questions.que_refno%TYPE                            DEFAULT NULL,
                                                  p_gqre_assm_refno       IN   generic_question_responses.gqre_assm_refno%TYPE     DEFAULT NULL,
-                                                 p_gqre_gque_reference   IN   generic_question_responses.gqre_gque_reference%TYPE DEFAULT NULL, 
-                                                 p_gqre_created_by       IN   generic_question_responses.gqre_created_by%TYPE     DEFAULT NULL,
-                                                 p_gqre_created_date     IN   generic_question_responses.gqre_created_date%TYPE   DEFAULT NULL)
+                                                 p_gqre_gque_reference   IN   generic_question_responses.gqre_gque_reference%TYPE DEFAULT NULL)
 IS
    CURSOR C_ANSWER_INFO IS
       SELECT que.que_datatype,
@@ -131,7 +146,11 @@ IS
              gan.gan_number_value,
              gan.gan_char_value,
              gan.gan_comments,
-             gan.gan_que_refno
+             gan.gan_que_refno,
+             gan.gan_created_by,
+             gan.gan_created_date,
+             gan.gan_modified_by,
+             gan.gan_modified_date
         FROM general_answers gan
        INNER JOIN questions que ON que.que_refno = gan.gan_que_refno
        WHERE gan.gan_app_refno = p_app_refno
@@ -143,30 +162,35 @@ BEGIN
    FETCH C_ANSWER_INFO INTO l_answer_info;
    CLOSE C_ANSWER_INFO;
    
-   create_gqre(p_gqre_assm_refno => p_gqre_assm_refno,
-               p_gqre_gque_reference => p_gqre_gque_reference,
-               p_gqre_boolean_value => CASE l_answer_info.que_datatype
-                                          WHEN 'Y' THEN l_answer_info.gan_char_value
+   IF l_answer_info.que_datatype IS NOT NULL
+   THEN
+      create_gqre(p_gqre_assm_refno => p_gqre_assm_refno,
+                  p_gqre_gque_reference => p_gqre_gque_reference,
+                  p_gqre_boolean_value => CASE l_answer_info.que_datatype
+                                             WHEN 'Y' THEN l_answer_info.gan_char_value
+                                             ELSE NULL
+                                          END,
+                  p_gqre_date_value => CASE l_answer_info.que_datatype
+                                          WHEN 'D' THEN l_answer_info.gan_date_value
                                           ELSE NULL
                                        END,
-               p_gqre_date_value => CASE l_answer_info.que_datatype
-                                       WHEN 'D' THEN l_answer_info.gan_date_value
-                                       ELSE NULL
-                                    END,
-               p_gqre_numeric_value => CASE l_answer_info.que_datatype
-                                          WHEN 'N' THEN l_answer_info.gan_number_value
+                  p_gqre_numeric_value => CASE l_answer_info.que_datatype
+                                             WHEN 'N' THEN l_answer_info.gan_number_value
+                                             ELSE NULL
+                                          END,
+                  p_gqre_text_value => CASE 
+                                          WHEN l_answer_info.que_datatype = 'C' AND l_answer_info.gan_char_value = 'COMMENT' THEN l_answer_info.gan_comments
                                           ELSE NULL
                                        END,
-               p_gqre_text_value => CASE 
-                                       WHEN l_answer_info.que_datatype = 'C' AND l_answer_info.gan_char_value = 'COMMENT' THEN l_answer_info.gan_comments
-                                       ELSE NULL
-                                    END,
-               p_gqre_gcre_code => CASE 
-                                      WHEN l_answer_info.que_datatype = 'C' AND l_answer_info.gan_char_value != 'COMMENT' THEN l_answer_info.gan_char_value
-                                      ELSE NULL
-                                   END,
-               p_gqre_created_by => p_gqre_created_by,
-               p_gqre_created_date => p_gqre_created_date);
+                  p_gqre_gcre_code => CASE 
+                                         WHEN l_answer_info.que_datatype = 'C' AND l_answer_info.gan_char_value != 'COMMENT' THEN l_answer_info.gan_char_value
+                                         ELSE NULL
+                                      END,
+                  p_gqre_created_by => l_answer_info.gan_created_by,
+                  p_gqre_created_date => l_answer_info.gan_created_date,
+                  p_gqre_modified_by => l_answer_info.gan_modified_by,
+                  p_gqre_modified_date => l_answer_info.gan_modified_date);
+   END IF;
 END create_gqre_from_app;
 /
 
@@ -217,7 +241,7 @@ BEGIN
                p_gqre_gque_reference => 201, 
                p_gqre_date_value => p_als_decision_date,
                p_gqre_created_by => NVL(p_als_auth_by, p_als_created_by),
-               p_gqre_created_date => NVL(p_als_auth_date, p_als_created_date));
+               p_gqre_created_date => NVL(p_als_auth_date, p_als_created_date));    
 END process_approval_questions;
 /
 
@@ -268,7 +292,7 @@ BEGIN
                   p_gqre_text_value => p_als_comments,
                   p_gqre_created_by => NVL(p_als_auth_by, p_als_created_by),
                   p_gqre_created_date => NVL(p_als_auth_date, p_als_created_date));
-   END IF;   
+   END IF;
 END process_apprtr_questions;
 /
 
@@ -289,268 +313,192 @@ BEGIN
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 91,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 241,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 241);
                                     
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 101,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 285,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 285);
    
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 149,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 243,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 243);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 96,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 284,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 284);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 107,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 286,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 286);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 143,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 242,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 242);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 404,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 269,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 269);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 41,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 245,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 245);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 411,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 270,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 270);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 54,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 246,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 246);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 66,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 248,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 248);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 74,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 250,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 250);
    
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 58,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 247,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 247);
    
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 70,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 249,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 249);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 136,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 261,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 261);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 82,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 251,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 251);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 90,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 253,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 253);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 98,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 255,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 255);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 86,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 252,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 252);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 94,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 254,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 254);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 140,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 262,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 262);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 416,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 271,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 271);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 148,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 263,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 263);
    
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 425,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 272,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 272);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 434,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 274,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 274);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 447,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 276,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 276);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 430,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 273,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 273);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 438,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 275,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 275);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 451,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 277,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 277);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 172,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 287,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 287);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 179,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 264,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 264);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 183,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 265,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 265);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 187,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 266,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 266);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 202,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 268,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 268);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 194,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 267,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 267);
                         
    generate_answer_comments(p_app_refno => p_app_refno,
                             p_que_refno => 821,
                             p_gqre_assm_refno => p_assm_refno,
-                            p_gqre_gque_reference => 281,
-                            p_gqre_created_by => p_als_created_by,
-                            p_gqre_created_date => p_als_created_date);
+                            p_gqre_gque_reference => 281);
                         
    generate_answer_comments(p_app_refno => p_app_refno,
                             p_que_refno => 826,
                             p_gqre_assm_refno => p_assm_refno,
-                            p_gqre_gque_reference => 282,
-                            p_gqre_created_by => p_als_created_by,
-                            p_gqre_created_date => p_als_created_date);
+                            p_gqre_gque_reference => 282);
    
    generate_answer_comments(p_app_refno => p_app_refno,
                             p_que_refno => 87,
                             p_gqre_assm_refno => p_assm_refno,
-                            p_gqre_gque_reference => 283,
-                            p_gqre_created_by => p_als_created_by,
-                            p_gqre_created_date => p_als_created_date);
+                            p_gqre_gque_reference => 283);
                         
    create_gqre(p_gqre_assm_refno => p_assm_refno,
                p_gqre_gque_reference => 196, 
@@ -575,14 +523,10 @@ BEGIN
       create_gqre(p_gqre_assm_refno => p_assm_refno,
                   p_gqre_gque_reference => 294, 
                   p_gqre_boolean_value => 'Y',
-                  p_gqre_created_by => p_als_auth_by,
-                  p_gqre_created_date => p_als_auth_date);
-                  
-      UPDATE generic_question_responses
-         SET gqre_created_date = p_als_auth_date
-       WHERE gqre_assm_refno = p_assm_refno
-         AND gqre_gque_reference = 294;
+                  p_gqre_created_by => NVL(p_als_auth_by, p_als_created_by),
+                  p_gqre_created_date => NVL(p_als_auth_date, p_als_created_date));
    END IF;
+   
 END process_hna_questions;
 /
 
@@ -603,163 +547,117 @@ BEGIN
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 411,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 270,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 270);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 54,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 246,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 246);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 66,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 248,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 248);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 74,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 250,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 250);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 58,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 247,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);                     
+                        p_gqre_gque_reference => 247);                     
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 70,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 249,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 249);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 136,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 261,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 261);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 106,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 256,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 256);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 114,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 258,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 258);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 123,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 260,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 260);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 110,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 257,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 257);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 118,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 259,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 259);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 140,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 262,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 262);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 416,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 271,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 271);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 148,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 263,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 263);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 179,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 264,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 264);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 183,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 265,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 265);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 187,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 266,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 266);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 202,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 268,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 268);
                         
    create_gqre_from_app(p_app_refno => p_app_refno,
                         p_que_refno => 194,
                         p_gqre_assm_refno => p_assm_refno,
-                        p_gqre_gque_reference => 267,
-                        p_gqre_created_by => p_als_created_by,
-                        p_gqre_created_date => p_als_created_date);
+                        p_gqre_gque_reference => 267);
                         
    generate_answer_comments(p_app_refno => p_app_refno,
                             p_que_refno => 821,
                             p_gqre_assm_refno => p_assm_refno,
-                            p_gqre_gque_reference => 281,
-                            p_gqre_created_by => p_als_created_by,
-                            p_gqre_created_date => p_als_created_date);
+                            p_gqre_gque_reference => 281);
                         
    generate_answer_comments(p_app_refno => p_app_refno,
                             p_que_refno => 826,
                             p_gqre_assm_refno => p_assm_refno,
-                            p_gqre_gque_reference => 282,
-                            p_gqre_created_by => p_als_created_by,
-                            p_gqre_created_date => p_als_created_date);
+                            p_gqre_gque_reference => 282);
                         
    generate_answer_comments(p_app_refno => p_app_refno,
                             p_que_refno => 87,
                             p_gqre_assm_refno => p_assm_refno,
-                            p_gqre_gque_reference => 283,
-                            p_gqre_created_by => p_als_created_by,
-                            p_gqre_created_date => p_als_created_date);
+                            p_gqre_gque_reference => 283);
                         
    create_gqre(p_gqre_assm_refno => p_assm_refno,
                p_gqre_gque_reference => 196, 
@@ -789,12 +687,8 @@ BEGIN
                   p_gqre_boolean_value => 'Y',
                   p_gqre_created_by => p_als_auth_by,
                   p_gqre_created_date => p_als_auth_date);
-      
-      UPDATE generic_question_responses
-         SET gqre_created_date = p_als_auth_date
-       WHERE gqre_assm_refno = p_assm_refno
-         AND gqre_gque_reference = 294;
    END IF;
+   
 END process_hnatr_questions;
 /
 
@@ -827,6 +721,9 @@ BEGIN
     WHERE assm_refno = p_assm_refno;
 END update_assessment;
 /
+
+ALTER TRIGGER GQRE_BR_U DISABLE;
+ALTER SESSION SET nls_date_format = 'DD/MM/RRRR';
 
 DECLARE
    CURSOR C_PARTIES_FOR_NEW_ASSESS IS
@@ -871,6 +768,7 @@ DECLARE
              als.als_rsd_hrv_lsd_code outcome,
              als.als_hrv_sdr_code reason,
              als.als_decision_date decision_date,
+             als.als_status_date,
              als.als_comments,
              app.app_aun_code,
              als.als_created_by,
@@ -950,11 +848,10 @@ BEGIN
       IF l_count < 3
       THEN         
          l_assm_refno := assm_refno_seq.NEXTVAL;
+         dbms_output.put_line('New assessment reference for application ' || l_curr_party.app_refno || ': ' || l_assm_refno);
          
          IF l_count = 1
          THEN
-            dbms_output.put_line('New assessment reference: ' || l_assm_refno);
-            
             IF l_als_info.als_rls_code = 'APPROVAL'
             THEN
                IF l_als_info.als_sco_code = 'AUT'
@@ -1409,6 +1306,7 @@ DECLARE
              als.als_rsd_hrv_lsd_code outcome,
              als.als_hrv_sdr_code reason,
              als.als_decision_date decision_date,
+             als.als_status_date,
              als.als_comments,
              app.app_aun_code,
              als.als_created_by,
@@ -1672,6 +1570,7 @@ END;
 /
 
 ALTER TRIGGER ASSM_BR_U ENABLE;
+ALTER TRIGGER GQRE_BR_U ENABLE;
 
 DROP PROCEDURE process_hnatr_questions;
 DROP PROCEDURE process_hna_questions;
