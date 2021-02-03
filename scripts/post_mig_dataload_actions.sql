@@ -1,4 +1,5 @@
 ALTER TRIGGER PAR_CRN_BR_IU ENABLE;
+ALTER TRIGGER ALS_AR_U ENABLE;
 
 UPDATE first_ref_values
    SET frv_current_ind = 'N'
