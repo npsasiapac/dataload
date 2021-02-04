@@ -211,7 +211,7 @@ BEGIN
    THEN                                 
       create_gqre(p_gqre_assm_refno => p_assm_refno,
                   p_gqre_gque_reference => 294, 
-                  p_gqre_boolean_value => 'Y',
+                  p_gqre_text_value => 'Y',
                   p_gqre_created_by => p_als_created_by,
                   p_gqre_created_date => p_als_created_date);
    END IF;
@@ -262,7 +262,7 @@ BEGIN
    THEN                                 
       create_gqre(p_gqre_assm_refno => p_assm_refno,
                   p_gqre_gque_reference => 294, 
-                  p_gqre_boolean_value => 'Y',
+                  p_gqre_text_value => 'Y',
                   p_gqre_created_by => p_als_created_by,
                   p_gqre_created_date => p_als_created_date);
    END IF;
@@ -522,7 +522,7 @@ BEGIN
    THEN
       create_gqre(p_gqre_assm_refno => p_assm_refno,
                   p_gqre_gque_reference => 294, 
-                  p_gqre_boolean_value => 'Y',
+                  p_gqre_text_value => 'Y',
                   p_gqre_created_by => NVL(p_als_auth_by, p_als_created_by),
                   p_gqre_created_date => NVL(p_als_auth_date, p_als_created_date));
    END IF;
@@ -684,7 +684,7 @@ BEGIN
    THEN
       create_gqre(p_gqre_assm_refno => p_assm_refno,
                   p_gqre_gque_reference => 294, 
-                  p_gqre_boolean_value => 'Y',
+                  p_gqre_text_value => 'Y',
                   p_gqre_created_by => p_als_auth_by,
                   p_gqre_created_date => p_als_auth_date);
    END IF;
@@ -698,7 +698,7 @@ IS
 BEGIN
    DELETE
      FROM generic_question_responses
-    WHERE gqre_gque_reference in (294, 195, 196, 197, 198, 200, 201, 294, 295, 311)
+    WHERE gqre_gque_reference IN (195, 196, 197, 198, 200, 201, 294, 295, 311)
       AND gqre_assm_refno = (SELECT assm_refno
                                FROM assessments
                               WHERE assm_assm_refno = p_assm_refno);
