@@ -1569,6 +1569,16 @@ WHEN OTHERS THEN
 END;
 /
 
+UPDATE assessments
+   SET assm_outcome_created_date = GREATEST(assm_status_date, (SELECT MIN(ale_created_date) 
+                                                                 FROM applic_list_entries 
+                                                                WHERE ale_app_refno = REPLACE(assm_comments,'Source application: ',''))),
+       assm_outcome_created_by = 'MIGRATION2'
+ WHERE assm_outcome_created_date IS NULL
+   AND assm_asst_code LIKE '%HNA'
+   AND assm_sco_code = 'CLO'
+   AND assm_comments LIKE 'Source Application%';
+
 ALTER TRIGGER ASSM_BR_U ENABLE;
 ALTER TRIGGER GQRE_BR_U ENABLE;
 
