@@ -1060,8 +1060,8 @@ BEGIN
                                  p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
                                  p_assm_created_by => l_als_info_first.als_created_by,
                                  p_assm_created_date => l_als_info_first.als_created_date,
-                                 p_assm_modified_by => NVL(l_als_info.als_modified_by, l_als_info.als_created_by),
-                                 p_assm_modified_date => NVL(l_als_info.als_modified_date, l_als_info.als_created_date),
+                                 p_assm_modified_by => NVL(l_als_info_first.als_modified_by, l_als_info_first.als_created_by),
+                                 p_assm_modified_date => NVL(l_als_info_first.als_modified_date, l_als_info_first.als_created_date),
                                  p_src_app_refno => l_curr_party.app_refno);
                                  
                process_hna_questions(p_app_refno => l_curr_party.app_refno,
@@ -1490,6 +1490,11 @@ BEGIN
             END IF;
          ELSIF l_count = 2
          THEN
+            OPEN C_FIRST_ALS_INFO(l_curr_party.par_refno,
+                                  l_curr_party.app_refno);
+            FETCH C_FIRST_ALS_INFO INTO l_als_info_first;
+            CLOSE C_FIRST_ALS_INFO;
+            
             IF l_als_info.als_rls_code = 'APPROVAL'
             THEN
                l_curr_status := CASE l_als_info.als_sco_code
@@ -1504,16 +1509,11 @@ BEGIN
                
                update_assessment(p_assm_refno => l_assm_refno,
                                  p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
-                                 p_assm_created_date => l_als_info.als_created_date,
-                                 p_assm_modified_date => NVL(l_als_info.als_modified_date, l_als_info.als_created_date),
-                                 p_assm_modified_by => NVL(l_als_info.als_modified_by, l_als_info.als_created_by));
+                                 p_assm_created_date => l_als_info_first.als_created_date,
+                                 p_assm_modified_date => NVL(l_als_info_first.als_modified_date, l_als_info_first.als_created_date),
+                                 p_assm_modified_by => NVL(l_als_info_info.als_modified_by, l_als_info_first.als_created_by));
             ELSIF l_als_info.als_rls_code = 'HNA'
             THEN
-               OPEN C_FIRST_ALS_INFO(l_curr_party.par_refno,
-                                     l_curr_party.app_refno);
-               FETCH C_FIRST_ALS_INFO INTO l_als_info_first;
-               CLOSE C_FIRST_ALS_INFO;
-               
                OPEN C_CURR_ASSM(l_curr_party.app_refno,
                                 'CLO');
                FETCH C_CURR_ASSM INTO l_assm_refno;
@@ -1547,9 +1547,9 @@ BEGIN
                CLOSE C_CURR_ASSM;
                
                update_assessment(p_assm_refno => l_assm_refno,
-                                 p_assm_created_date => l_als_info.als_created_date,
-                                 p_assm_modified_date => l_als_info.als_modified_date,
-                                 p_assm_modified_by => l_als_info.als_modified_by);
+                                 p_assm_created_date => l_als_info_first.als_created_date,
+                                 p_assm_modified_date => l_als_info_first.als_modified_date,
+                                 p_assm_modified_by => l_als_info_first.als_modified_by);
             ELSIF l_als_info.als_rls_code = 'HNATR'
             THEN
                OPEN C_FIRST_ALS_INFO(l_curr_party.par_refno,
