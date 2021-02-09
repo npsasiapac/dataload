@@ -1511,7 +1511,7 @@ BEGIN
                                  p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
                                  p_assm_created_date => l_als_info_first.als_created_date,
                                  p_assm_modified_date => NVL(l_als_info_first.als_modified_date, l_als_info_first.als_created_date),
-                                 p_assm_modified_by => NVL(l_als_info_info.als_modified_by, l_als_info_first.als_created_by));
+                                 p_assm_modified_by => NVL(l_als_info_first.als_modified_by, l_als_info_first.als_created_by));
             ELSIF l_als_info.als_rls_code = 'HNA'
             THEN
                OPEN C_CURR_ASSM(l_curr_party.app_refno,
