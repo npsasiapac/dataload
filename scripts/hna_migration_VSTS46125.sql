@@ -726,7 +726,8 @@ BEGIN
 END update_assessment;
 /
 
-CREATE OR REPLACE FUNCTION is_party_processed(p_par_refno   IN   parties.par_refno%TYPE)
+CREATE OR REPLACE FUNCTION is_party_processed(p_par_refno   IN   parties.par_refno%TYPE,
+                                              p_asst_code   IN   assessments.assm_asst_code%TYPE)
 RETURN VARCHAR2 IS
    l_exists   VARCHAR2(1);
    
@@ -734,6 +735,7 @@ RETURN VARCHAR2 IS
       SELECT 'Y'
         FROM assessments
        WHERE assm_par_refno = p_par_refno
+         AND assm_asst_code = p_asst_code
          AND assm_comments LIKE 'Source application%';
 BEGIN
    OPEN C_PARTY_ALREADY_ON_ASSM;
@@ -783,7 +785,8 @@ DECLARE
        INNER JOIN involved_parties ipa ON ipa.ipa_app_refno = app.app_refno
                                       AND ipa.ipa_par_refno = p_par_refno
                                       AND ipa.ipa_main_applicant_ind = 'Y'
-                                      AND TRUNC(SYSDATE) BETWEEN TRUNC(ipa.ipa_start_date) AND NVL(TRUNC(ipa.ipa_end_date), SYSDATE + 1); 
+                                      AND TRUNC(SYSDATE) BETWEEN TRUNC(ipa.ipa_start_date) AND NVL(TRUNC(ipa.ipa_end_date), SYSDATE + 1)
+       WHERE app.app_refno = p_app_refno; 
                                       
    CURSOR C_LAST_ALS_INFO(p_par_refno   NUMBER,
                           p_app_refno   NUMBER) IS
@@ -869,17 +872,16 @@ BEGIN
                            l_curr_party.app_refno);
       FETCH C_LAST_ALS_INFO INTO l_als_info;
       CLOSE C_LAST_ALS_INFO;
-      
-     
+           
       IF l_count < 3
       THEN         
-         IF is_party_processed(l_curr_party.par_refno) = 'N'
+         l_assm_refno := assm_refno_seq.NEXTVAL;
+         
+         IF l_count = 1
          THEN
-            l_assm_refno := assm_refno_seq.NEXTVAL;
-            
-            IF l_count = 1
+            IF l_als_info.als_rls_code = 'APPROVAL'
             THEN
-               IF l_als_info.als_rls_code = 'APPROVAL'
+               IF is_party_processed(l_curr_party.par_refno, 'HNA') = 'N'
                THEN
                   IF l_als_info.als_sco_code = 'AUT'
                   THEN
@@ -940,8 +942,13 @@ BEGIN
                                                 p_als_created_date => l_als_info.als_created_date,
                                                 p_als_auth_by => l_als_info.als_authorised_by,
                                                 p_als_auth_date => l_als_info.als_authorised_date);
-                  END IF;                
-               ELSIF l_als_info.als_rls_code = 'HNA'
+                  END IF;
+               ELSE
+                  dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
+               END IF;
+            ELSIF l_als_info.als_rls_code = 'HNA'
+            THEN
+               IF is_party_processed(l_curr_party.par_refno, 'HNA') = 'N'
                THEN
                   create_assessment(p_assm_refno => l_assm_refno,
                                     p_assm_asst_code => 'HNA',
@@ -969,8 +976,12 @@ BEGIN
                                         p_als_created_date => l_als_info.als_created_date,
                                         p_als_auth_by => l_als_info.als_authorised_by,
                                         p_als_auth_date => l_als_info.als_authorised_date);
-                                        
-               ELSIF l_als_info.als_rls_code = 'APPRTR'
+               ELSE
+                  dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
+               END IF;
+            ELSIF l_als_info.als_rls_code = 'APPRTR'
+            THEN
+               IF is_party_processed(l_curr_party.par_refno, 'TRHNA') = 'N'
                THEN
                   IF l_als_info.als_sco_code = 'AUT'
                   THEN
@@ -1032,7 +1043,12 @@ BEGIN
                                               p_als_auth_by => l_als_info.als_authorised_by,
                                               p_als_auth_date => l_als_info.als_authorised_date);
                   END IF;
-               ELSIF l_als_info.als_rls_code = 'HNATR'
+               ELSE
+                  dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
+               END IF;
+            ELSIF l_als_info.als_rls_code = 'HNATR'
+            THEN
+               IF is_party_processed(l_curr_party.par_refno, 'TRHNA') = 'N'
                THEN
                   create_assessment(p_assm_refno => l_assm_refno,
                                     p_assm_asst_code => 'TRHNA',
@@ -1060,15 +1076,20 @@ BEGIN
                                           p_als_created_date => l_als_info.als_created_date,
                                           p_als_auth_by => l_als_info.als_authorised_by,
                                           p_als_auth_date => l_als_info.als_authorised_date);
+               ELSE
+                  dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
                END IF;
-            ELSIF l_count = 2
+            END IF;
+         ELSIF l_count = 2
+         THEN
+            OPEN C_FIRST_ALS_INFO(l_curr_party.par_refno,
+                                  l_curr_party.app_refno);
+            FETCH C_FIRST_ALS_INFO INTO l_als_info_first;
+            CLOSE C_FIRST_ALS_INFO;
+         
+            IF l_als_info.als_rls_code = 'APPROVAL'
             THEN
-               OPEN C_FIRST_ALS_INFO(l_curr_party.par_refno,
-                                     l_curr_party.app_refno);
-               FETCH C_FIRST_ALS_INFO INTO l_als_info_first;
-               CLOSE C_FIRST_ALS_INFO;
-            
-               IF l_als_info.als_rls_code = 'APPROVAL'
+               IF is_party_processed(l_curr_party.par_refno, 'HNA') = 'N'
                THEN
                   create_assessment(p_assm_refno => l_assm_refno,
                                     p_assm_asst_code => 'HNA',
@@ -1114,7 +1135,7 @@ BEGIN
                                  p_gqre_created_by => NVL(l_als_info.als_authorised_by, l_als_info.als_created_by),
                                  p_gqre_created_date => NVL(l_als_info.als_authorised_date, l_als_info.als_created_date));
                   END IF;
-   
+
                   create_gqre(p_gqre_assm_refno => l_assm_refno,
                               p_gqre_gque_reference => 201, 
                               p_gqre_date_value => l_als_info_first.decision_date,
@@ -1124,7 +1145,12 @@ BEGIN
                   a_assessments.review_assessment(l_assm_refno, NVL(l_als_info_first.als_modified_date, l_als_info_first.als_created_date), FALSE);
 
                   delete_resp_reviewed_assm(l_assm_refno);
-               ELSIF l_als_info.als_rls_code = 'HNA'
+               ELSE
+                  dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
+               END IF;
+            ELSIF l_als_info.als_rls_code = 'HNA'
+            THEN
+               IF is_party_processed(l_curr_party.par_refno, 'HNA') = 'N'
                THEN
                   create_assessment(p_assm_refno => l_assm_refno,
                                     p_assm_asst_code => 'HNA',
@@ -1181,7 +1207,12 @@ BEGIN
                                         p_als_created_date => l_als_info.als_created_date,
                                         p_als_auth_by => l_als_info.als_authorised_by,
                                         p_als_auth_date => l_als_info.als_authorised_date);
-               ELSIF l_als_info.als_rls_code = 'APPRTR'
+               ELSE
+                  dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
+               END IF;
+            ELSIF l_als_info.als_rls_code = 'APPRTR'
+            THEN
+               IF is_party_processed(l_curr_party.par_refno, 'TRHNA') = 'N'
                THEN
                   create_assessment(p_assm_refno => l_assm_refno,
                                     p_assm_asst_code => 'TRHNA',
@@ -1227,7 +1258,7 @@ BEGIN
                                  p_gqre_created_by => NVL(l_als_info.als_authorised_by, l_als_info.als_created_by),
                                  p_gqre_created_date => NVL(l_als_info.als_authorised_date, l_als_info.als_created_date));
                   END IF;
-   
+
                   create_gqre(p_gqre_assm_refno => l_assm_refno,
                               p_gqre_gque_reference => 201, 
                               p_gqre_date_value => l_als_info.decision_date,
@@ -1237,7 +1268,12 @@ BEGIN
                   a_assessments.review_assessment(l_assm_refno, NVL(l_als_info.als_modified_date, l_als_info.als_created_date), FALSE);
                   
                   delete_resp_reviewed_assm(l_assm_refno);
-               ELSIF l_als_info.als_rls_code = 'HNATR'
+               ELSE
+                  dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
+               END IF;
+            ELSIF l_als_info.als_rls_code = 'HNATR'
+            THEN
+               IF is_party_processed(l_curr_party.par_refno, 'TRHNA') = 'N'
                THEN
                   create_assessment(p_assm_refno => l_assm_refno,
                                     p_assm_asst_code => 'TRHNA',
@@ -1265,7 +1301,7 @@ BEGIN
                                            p_als_created_date => l_als_info_first.als_created_date,
                                            p_als_auth_by => l_als_info_first.als_authorised_by,
                                            p_als_auth_date => l_als_info_first.als_authorised_date);   
-   
+
                   l_assm_refno := assm_refno_seq.NEXTVAL;
                   
                   create_assessment(p_assm_refno => l_assm_refno,
@@ -1294,10 +1330,10 @@ BEGIN
                                           p_als_created_date => l_als_info.als_created_date,
                                           p_als_auth_by => l_als_info.als_authorised_by,
                                           p_als_auth_date => l_als_info.als_authorised_date);
+               ELSE
+                  dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
                END IF;
             END IF;
-         ELSE
-            dbms_output.put_line('Assessment already created for party: ' || l_curr_party.par_refno);
          END IF;
       ELSE
          dbms_output.put_line('Application ' || l_curr_party.app_refno || ' has more than 2 decisions');
