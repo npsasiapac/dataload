@@ -753,22 +753,22 @@ DECLARE
    CURSOR C_PARTIES_FOR_NEW_ASSESS IS
       SELECT s.*,
              ROW_NUMBER() OVER (ORDER BY app_refno, par_refno) rn
-             from (
-      SELECT DISTINCT ipa.ipa_par_refno par_refno,
-             ipa.ipa_app_refno app_refno,
-             REPLACE(app.app_aun_code, 'A-', '') app_aun_code
-        FROM applications app
-        LEFT JOIN (SELECT app_refno, 
-                          'Y' tr_exists_ind
-                     FROM applications
-                    WHERE EXISTS (SELECT NULL
-                                    FROM applic_list_entries 
-                                   WHERE ale_rli_code = 'TR' 
-                                     AND ale_app_refno = app_refno)) apptr ON apptr.app_refno = app.app_refno
-       INNER JOIN applic_list_stage_decisions als ON als.als_ale_app_refno = app.app_refno
-       INNER JOIN involved_parties ipa ON ipa.ipa_app_refno = app.app_refno
-                                      AND ipa.ipa_main_applicant_ind = 'Y'
-                                      AND TRUNC(SYSDATE) BETWEEN TRUNC(ipa.ipa_start_date) AND NVL(TRUNC(ipa.ipa_end_date), SYSDATE + 1)) s;
+        FROM (SELECT DISTINCT ipa.ipa_par_refno par_refno,
+                     ipa.ipa_app_refno app_refno,
+                     REPLACE(app.app_aun_code, 'A-', '') app_aun_code
+                FROM applications app
+                LEFT JOIN (SELECT app_refno, 
+                                  'Y' tr_exists_ind
+                             FROM applications
+                            WHERE EXISTS (SELECT NULL
+                                            FROM applic_list_entries 
+                                           WHERE ale_rli_code = 'TR' 
+                                             AND ale_app_refno = app_refno)) apptr ON apptr.app_refno = app.app_refno
+               INNER JOIN applic_list_stage_decisions als ON als.als_ale_app_refno = app.app_refno
+               INNER JOIN involved_parties ipa ON ipa.ipa_app_refno = app.app_refno
+                                              AND ipa.ipa_main_applicant_ind = 'Y'
+                                              AND TRUNC(SYSDATE) BETWEEN TRUNC(ipa.ipa_start_date) AND NVL(TRUNC(ipa.ipa_end_date), SYSDATE + 1)
+               WHERE app.app_sco_code NOT IN ('HSD', 'CLD')) s;
                                       
    CURSOR C_STAGE_DECISION_COUNT(p_par_refno   NUMBER,
                                  p_app_refno   NUMBER) IS
@@ -1363,7 +1363,8 @@ DECLARE
        INNER JOIN applic_list_stage_decisions als ON als.als_ale_app_refno = app.app_refno
        INNER JOIN involved_parties ipa ON ipa.ipa_app_refno = app.app_refno
                                       AND ipa.ipa_main_applicant_ind = 'Y'
-                                      AND TRUNC(SYSDATE) BETWEEN TRUNC(ipa.ipa_start_date) AND NVL(TRUNC(ipa.ipa_end_date), SYSDATE + 1);
+                                      AND TRUNC(SYSDATE) BETWEEN TRUNC(ipa.ipa_start_date) AND NVL(TRUNC(ipa.ipa_end_date), SYSDATE + 1)
+       WHERE app.app_sco_code NOT IN ('HSD', 'CLD');
                                       
    CURSOR C_STAGE_DECISION_COUNT(p_par_refno   NUMBER,
                                  p_app_refno   NUMBER) IS
