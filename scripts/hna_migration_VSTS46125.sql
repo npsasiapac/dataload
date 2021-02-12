@@ -1123,7 +1123,7 @@ BEGIN
                   
                   create_gqre(p_gqre_assm_refno => l_assm_refno,
                               p_gqre_gque_reference => 198, 
-                              p_gqre_gcre_code => l_als_info_first.outcome,
+                              p_gqre_gcre_code => l_als_info.outcome,
                               p_gqre_created_by => NVL(l_als_info.als_authorised_by, l_als_info.als_created_by),
                               p_gqre_created_date => NVL(l_als_info.als_authorised_date, l_als_info.als_created_date));
                   
@@ -1131,14 +1131,14 @@ BEGIN
                   THEN                 
                      create_gqre(p_gqre_assm_refno => l_assm_refno,
                                  p_gqre_gque_reference => 200, 
-                                 p_gqre_text_value => l_als_info_first.als_comments,
+                                 p_gqre_text_value => l_als_info.als_comments,
                                  p_gqre_created_by => NVL(l_als_info.als_authorised_by, l_als_info.als_created_by),
                                  p_gqre_created_date => NVL(l_als_info.als_authorised_date, l_als_info.als_created_date));
                   END IF;
 
                   create_gqre(p_gqre_assm_refno => l_assm_refno,
                               p_gqre_gque_reference => 201, 
-                              p_gqre_date_value => l_als_info_first.decision_date,
+                              p_gqre_date_value => l_als_info.decision_date,
                               p_gqre_created_by => NVL(l_als_info.als_authorised_by, l_als_info.als_created_by),
                               p_gqre_created_date => NVL(l_als_info.als_authorised_date, l_als_info.als_created_date));
 
