@@ -818,7 +818,8 @@ DECLARE
                                       AND ipa.ipa_main_applicant_ind = 'Y'
                                       AND TRUNC(SYSDATE) BETWEEN TRUNC(ipa.ipa_start_date) AND NVL(TRUNC(ipa.ipa_end_date), SYSDATE + 1)
        WHERE app.app_refno = p_app_refno
-       ORDER BY NVL(als_modified_date, als_created_date) DESC; 
+       ORDER BY NVL(als_modified_date, als_created_date) DESC,
+                als_rls_code; 
        
    CURSOR C_FIRST_ALS_INFO(p_par_refno   NUMBER,
                            p_app_refno   NUMBER) IS
@@ -850,7 +851,8 @@ DECLARE
                                       AND ipa.ipa_main_applicant_ind = 'Y'
                                       AND TRUNC(SYSDATE) BETWEEN TRUNC(ipa.ipa_start_date) AND NVL(TRUNC(ipa.ipa_end_date), SYSDATE + 1)
        WHERE app.app_refno = p_app_refno
-       ORDER BY NVL(als_modified_date, als_created_date); 
+       ORDER BY NVL(als_modified_date, als_created_date),
+                als_rls_code DESC; 
   
    l_count         NUMBER(10);
    l_assm_count    NUMBER(10);
