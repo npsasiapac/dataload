@@ -1,4 +1,4 @@
-SPOO delete_ale_hna_trhna.log
+SPOO hna_migration_VSTS46125_delete.log
 SET PAGESIZE 0
 
 DELETE 
