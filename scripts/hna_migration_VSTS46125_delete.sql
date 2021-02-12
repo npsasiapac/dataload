@@ -44,6 +44,17 @@ DELETE
                      FROM applications
                     WHERE app_refno = als_ale_app_refno
                       AND app_sco_code IN ('HSD', 'CLD'));
+                      
+DELETE
+  FROM applic_stage_decision_hist
+ WHERE sdh_als_ale_app_refno IN (SELECT DISTINCT ale_app_refno
+                                   FROM applic_list_entries
+                                  WHERE ale_rli_code IN ('HNA', 'TRHNA'))
+   AND sdh_als_ale_rli_code IN ('TRHNA', 'HNA')
+   AND NOT EXISTS (SELECT 'x'
+                     FROM applications
+                    WHERE app_refno = sdh_als_ale_app_refno
+                      AND app_sco_code IN ('HSD', 'CLD'));
 
 DELETE
   FROM applic_rule_points
