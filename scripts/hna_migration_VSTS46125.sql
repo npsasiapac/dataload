@@ -863,483 +863,488 @@ DECLARE
 BEGIN
    FOR l_curr_party IN C_PARTIES_FOR_NEW_ASSESS
    LOOP
-      l_count := 0;
-      
-      OPEN C_STAGE_DECISION_COUNT(l_curr_party.par_refno,
-                                  l_curr_party.app_refno);
-      FETCH C_STAGE_DECISION_COUNT INTO l_count;
-      CLOSE C_STAGE_DECISION_COUNT;
-      
-      OPEN C_LAST_ALS_INFO(l_curr_party.par_refno,
-                           l_curr_party.app_refno);
-      FETCH C_LAST_ALS_INFO INTO l_als_info;
-      CLOSE C_LAST_ALS_INFO;
-           
-      IF l_count < 3
-      THEN         
-         l_assm_refno := assm_refno_seq.NEXTVAL;
+      BEGIN
+         l_count := 0;
          
-         IF l_count = 1
-         THEN
-            IF l_als_info.als_rls_code = 'APPROVAL'
+         OPEN C_STAGE_DECISION_COUNT(l_curr_party.par_refno,
+                                     l_curr_party.app_refno);
+         FETCH C_STAGE_DECISION_COUNT INTO l_count;
+         CLOSE C_STAGE_DECISION_COUNT;
+         
+         OPEN C_LAST_ALS_INFO(l_curr_party.par_refno,
+                              l_curr_party.app_refno);
+         FETCH C_LAST_ALS_INFO INTO l_als_info;
+         CLOSE C_LAST_ALS_INFO;
+              
+         IF l_count < 3
+         THEN         
+            l_assm_refno := assm_refno_seq.NEXTVAL;
+            
+            IF l_count = 1
             THEN
-               IF is_party_processed(l_curr_party.par_refno, 'HNA') = 'N'
+               IF l_als_info.als_rls_code = 'APPROVAL'
                THEN
-                  IF l_als_info.als_sco_code = 'AUT'
+                  IF is_party_processed(l_curr_party.par_refno, 'HNA') = 'N'
+                  THEN
+                     IF l_als_info.als_sco_code = 'AUT'
+                     THEN
+                        create_assessment(p_assm_refno => l_assm_refno,
+                                          p_assm_asst_code => 'HNA',
+                                          p_assm_sequence => 1,
+                                          p_assm_assessment_date => l_als_info.decision_date,
+                                          p_assm_sco_code => 'CLO',
+                                          p_assm_ato_code => l_als_info.outcome,
+                                          p_assm_ipp_refno => 96,
+                                          p_assm_par_refno => l_curr_party.par_refno,
+                                          p_assm_aun_code => l_curr_party.app_aun_code,
+                                          p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
+                                          p_assm_created_by => l_als_info.als_created_by,
+                                          p_assm_created_date => l_als_info.als_created_date,
+                                          p_assm_modified_by => l_als_info.als_authorised_by,
+                                          p_assm_modified_date => l_als_info.als_authorised_date,
+                                          p_src_app_refno => l_curr_party.app_refno);
+                        
+                        process_approval_questions(p_assm_refno => l_assm_refno,
+                                                   p_als_sco_code => l_als_info.als_sco_code,
+                                                   p_als_hrv_sdr_code => l_als_info.reason,
+                                                   p_als_rsd_hrv_lsd_code => l_als_info.outcome,
+                                                   p_als_comments => l_als_info.als_comments,
+                                                   p_als_decision_date => l_als_info.decision_date,
+                                                   p_als_created_by => l_als_info.als_created_by,
+                                                   p_als_created_date => l_als_info.als_created_date,
+                                                   p_als_auth_by => l_als_info.als_authorised_by,
+                                                   p_als_auth_date => l_als_info.als_authorised_date);
+                                                
+                        a_assessments.review_assessment(l_assm_refno, l_als_info.als_authorised_date, FALSE);
+                        
+                        delete_resp_reviewed_assm(l_assm_refno);
+                     ELSE
+                        create_assessment(p_assm_refno => l_assm_refno,
+                                          p_assm_asst_code => 'HNA',
+                                          p_assm_sequence => 1,
+                                          p_assm_assessment_date => l_als_info.decision_date,
+                                          p_assm_sco_code => 'PEN',
+                                          p_assm_ato_code => l_als_info.outcome,
+                                          p_assm_ipp_refno => 96,
+                                          p_assm_par_refno => l_curr_party.par_refno,
+                                          p_assm_aun_code => l_curr_party.app_aun_code,
+                                          p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
+                                          p_assm_created_by => l_als_info.als_created_by,
+                                          p_assm_created_date => l_als_info.als_created_date,
+                                          p_assm_modified_by => l_als_info.als_authorised_by,
+                                          p_assm_modified_date => l_als_info.als_authorised_date,
+                                          p_src_app_refno => l_curr_party.app_refno);
+                                          
+                        process_approval_questions(p_assm_refno => l_assm_refno,
+                                                   p_als_sco_code => l_als_info.als_sco_code,
+                                                   p_als_hrv_sdr_code => l_als_info.reason,
+                                                   p_als_rsd_hrv_lsd_code => l_als_info.outcome,
+                                                   p_als_comments => l_als_info.als_comments,
+                                                   p_als_decision_date => l_als_info.decision_date,
+                                                   p_als_created_by => l_als_info.als_created_by,
+                                                   p_als_created_date => l_als_info.als_created_date,
+                                                   p_als_auth_by => l_als_info.als_authorised_by,
+                                                   p_als_auth_date => l_als_info.als_authorised_date);
+                     END IF;
+                  ELSE
+                     dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
+                  END IF;
+               ELSIF l_als_info.als_rls_code = 'HNA'
+               THEN
+                  IF is_party_processed(l_curr_party.par_refno, 'HNA') = 'N'
                   THEN
                      create_assessment(p_assm_refno => l_assm_refno,
                                        p_assm_asst_code => 'HNA',
                                        p_assm_sequence => 1,
                                        p_assm_assessment_date => l_als_info.decision_date,
-                                       p_assm_sco_code => 'CLO',
-                                       p_assm_ato_code => l_als_info.outcome,
+                                       p_assm_sco_code => 'PEN',
+                                       p_assm_ato_code => NULL,
                                        p_assm_ipp_refno => 96,
                                        p_assm_par_refno => l_curr_party.par_refno,
                                        p_assm_aun_code => l_curr_party.app_aun_code,
                                        p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
                                        p_assm_created_by => l_als_info.als_created_by,
                                        p_assm_created_date => l_als_info.als_created_date,
-                                       p_assm_modified_by => l_als_info.als_authorised_by,
-                                       p_assm_modified_date => l_als_info.als_authorised_date,
+                                       p_assm_modified_by => l_als_info.als_modified_by,
+                                       p_assm_modified_date => l_als_info.als_modified_date,
                                        p_src_app_refno => l_curr_party.app_refno);
                      
-                     process_approval_questions(p_assm_refno => l_assm_refno,
-                                                p_als_sco_code => l_als_info.als_sco_code,
-                                                p_als_hrv_sdr_code => l_als_info.reason,
-                                                p_als_rsd_hrv_lsd_code => l_als_info.outcome,
-                                                p_als_comments => l_als_info.als_comments,
-                                                p_als_decision_date => l_als_info.decision_date,
-                                                p_als_created_by => l_als_info.als_created_by,
-                                                p_als_created_date => l_als_info.als_created_date,
-                                                p_als_auth_by => l_als_info.als_authorised_by,
-                                                p_als_auth_date => l_als_info.als_authorised_date);
-                                             
-                     a_assessments.review_assessment(l_assm_refno, l_als_info.als_authorised_date, FALSE);
-                     
-                     delete_resp_reviewed_assm(l_assm_refno);
+                     process_hna_questions(p_app_refno => l_curr_party.app_refno,
+                                           p_assm_refno => l_assm_refno,
+                                           p_als_sco_code => l_als_info.als_sco_code,
+                                           p_als_hrv_sdr_code => l_als_info.reason,
+                                           p_als_rsd_hrv_lsd_code => l_als_info.outcome,
+                                           p_als_comments => l_als_info.als_comments,
+                                           p_als_created_by => l_als_info.als_created_by,
+                                           p_als_created_date => l_als_info.als_created_date,
+                                           p_als_auth_by => l_als_info.als_authorised_by,
+                                           p_als_auth_date => l_als_info.als_authorised_date);
                   ELSE
+                     dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
+                  END IF;
+               ELSIF l_als_info.als_rls_code = 'APPRTR'
+               THEN
+                  IF is_party_processed(l_curr_party.par_refno, 'TRHNA') = 'N'
+                  THEN
+                     IF l_als_info.als_sco_code = 'AUT'
+                     THEN
+                        create_assessment(p_assm_refno => l_assm_refno,
+                                          p_assm_asst_code => 'TRHNA',
+                                          p_assm_sequence => 1,
+                                          p_assm_assessment_date => l_als_info.decision_date,
+                                          p_assm_sco_code => 'CLO',
+                                          p_assm_ato_code => l_als_info.outcome,
+                                          p_assm_ipp_refno => 90,
+                                          p_assm_par_refno => l_curr_party.par_refno,
+                                          p_assm_aun_code => l_curr_party.app_aun_code,
+                                          p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
+                                          p_assm_created_by => l_als_info.als_created_by,
+                                          p_assm_created_date => l_als_info.als_created_date,
+                                          p_assm_modified_by => l_als_info.als_authorised_by,
+                                          p_assm_modified_date => l_als_info.als_authorised_date,
+                                          p_src_app_refno => l_curr_party.app_refno);
+                                          
+                        process_apprtr_questions(p_assm_refno => l_assm_refno,
+                                                 p_als_sco_code => l_als_info.als_sco_code,
+                                                 p_als_hrv_sdr_code => l_als_info.reason,
+                                                 p_als_rsd_hrv_lsd_code => l_als_info.outcome,
+                                                 p_als_comments => l_als_info.als_comments,
+                                                 p_als_decision_date => l_als_info.decision_date,
+                                                 p_als_created_by => l_als_info.als_created_by,
+                                                 p_als_created_date => l_als_info.als_created_date,
+                                                 p_als_auth_by => l_als_info.als_authorised_by,
+                                                 p_als_auth_date => l_als_info.als_authorised_date);
+                        
+                        a_assessments.review_assessment(l_assm_refno, l_als_info.als_authorised_date, FALSE);
+                        
+                        delete_resp_reviewed_assm(l_assm_refno);
+                     ELSE
+                        create_assessment(p_assm_refno => l_assm_refno,
+                                          p_assm_asst_code => 'TRHNA',
+                                          p_assm_sequence => 1,
+                                          p_assm_assessment_date => l_als_info.decision_date,
+                                          p_assm_sco_code => 'PEN',
+                                          p_assm_ato_code => l_als_info.outcome,
+                                          p_assm_ipp_refno => 90,
+                                          p_assm_par_refno => l_curr_party.par_refno,
+                                          p_assm_aun_code => l_curr_party.app_aun_code,
+                                          p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
+                                          p_assm_created_by => l_als_info.als_created_by,
+                                          p_assm_created_date => l_als_info.als_created_date,
+                                          p_assm_modified_by => l_als_info.als_authorised_by,
+                                          p_assm_modified_date => l_als_info.als_authorised_date,
+                                          p_src_app_refno => l_curr_party.app_refno);
+                                          
+                        process_apprtr_questions(p_assm_refno => l_assm_refno,
+                                                 p_als_sco_code => l_als_info.als_sco_code,
+                                                 p_als_hrv_sdr_code => l_als_info.reason,
+                                                 p_als_rsd_hrv_lsd_code => l_als_info.outcome,
+                                                 p_als_comments => l_als_info.als_comments,
+                                                 p_als_decision_date => l_als_info.decision_date,
+                                                 p_als_created_by => l_als_info.als_created_by,
+                                                 p_als_created_date => l_als_info.als_created_date,
+                                                 p_als_auth_by => l_als_info.als_authorised_by,
+                                                 p_als_auth_date => l_als_info.als_authorised_date);
+                     END IF;
+                  ELSE
+                     dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
+                  END IF;
+               ELSIF l_als_info.als_rls_code = 'HNATR'
+               THEN
+                  IF is_party_processed(l_curr_party.par_refno, 'TRHNA') = 'N'
+                  THEN
+                     create_assessment(p_assm_refno => l_assm_refno,
+                                       p_assm_asst_code => 'TRHNA',
+                                       p_assm_sequence => 1,
+                                       p_assm_assessment_date => l_als_info.decision_date,
+                                       p_assm_sco_code => 'PEN',
+                                       p_assm_ato_code => NULL,
+                                       p_assm_ipp_refno => 90,
+                                       p_assm_par_refno => l_curr_party.par_refno,
+                                       p_assm_aun_code => l_curr_party.app_aun_code,
+                                       p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
+                                       p_assm_created_by => l_als_info.als_created_by,
+                                       p_assm_created_date => l_als_info.als_created_date,
+                                       p_assm_modified_by => l_als_info.als_modified_by,
+                                       p_assm_modified_date => l_als_info.als_modified_date,
+                                       p_src_app_refno => l_curr_party.app_refno);
+                                       
+                     process_hnatr_questions(p_app_refno => l_curr_party.app_refno,
+                                             p_assm_refno => l_assm_refno,
+                                             p_als_sco_code => l_als_info.als_sco_code,
+                                             p_als_hrv_sdr_code => l_als_info.reason,
+                                             p_als_rsd_hrv_lsd_code => l_als_info.outcome,
+                                             p_als_comments => l_als_info.als_comments,
+                                             p_als_created_by => l_als_info.als_created_by,
+                                             p_als_created_date => l_als_info.als_created_date,
+                                             p_als_auth_by => l_als_info.als_authorised_by,
+                                             p_als_auth_date => l_als_info.als_authorised_date);
+                  ELSE
+                     dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
+                  END IF;
+               END IF;
+            ELSIF l_count = 2
+            THEN
+               OPEN C_FIRST_ALS_INFO(l_curr_party.par_refno,
+                                     l_curr_party.app_refno);
+               FETCH C_FIRST_ALS_INFO INTO l_als_info_first;
+               CLOSE C_FIRST_ALS_INFO;
+            
+               IF l_als_info.als_rls_code = 'APPROVAL'
+               THEN
+                  IF is_party_processed(l_curr_party.par_refno, 'HNA') = 'N'
+                  THEN
                      create_assessment(p_assm_refno => l_assm_refno,
                                        p_assm_asst_code => 'HNA',
                                        p_assm_sequence => 1,
                                        p_assm_assessment_date => l_als_info.decision_date,
-                                       p_assm_sco_code => 'PEN',
+                                       p_assm_sco_code => CASE l_als_info.als_sco_code
+                                                             WHEN 'PEN' THEN 'PEN'
+                                                             WHEN 'AUT' THEN 'CLO'
+                                                          END,
                                        p_assm_ato_code => l_als_info.outcome,
                                        p_assm_ipp_refno => 96,
                                        p_assm_par_refno => l_curr_party.par_refno,
                                        p_assm_aun_code => l_curr_party.app_aun_code,
                                        p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
-                                       p_assm_created_by => l_als_info.als_created_by,
-                                       p_assm_created_date => l_als_info.als_created_date,
-                                       p_assm_modified_by => l_als_info.als_authorised_by,
-                                       p_assm_modified_date => l_als_info.als_authorised_date,
+                                       p_assm_created_by => l_als_info_first.als_created_by,
+                                       p_assm_created_date => l_als_info_first.als_created_date,
+                                       p_assm_modified_by => NVL(l_als_info_first.als_modified_by, l_als_info_first.als_created_by),
+                                       p_assm_modified_date => NVL(l_als_info_first.als_modified_date, l_als_info_first.als_created_date),
                                        p_src_app_refno => l_curr_party.app_refno);
-                                       
-                     process_approval_questions(p_assm_refno => l_assm_refno,
-                                                p_als_sco_code => l_als_info.als_sco_code,
-                                                p_als_hrv_sdr_code => l_als_info.reason,
-                                                p_als_rsd_hrv_lsd_code => l_als_info.outcome,
-                                                p_als_comments => l_als_info.als_comments,
-                                                p_als_decision_date => l_als_info.decision_date,
-                                                p_als_created_by => l_als_info.als_created_by,
-                                                p_als_created_date => l_als_info.als_created_date,
-                                                p_als_auth_by => l_als_info.als_authorised_by,
-                                                p_als_auth_date => l_als_info.als_authorised_date);
-                  END IF;
-               ELSE
-                  dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
-               END IF;
-            ELSIF l_als_info.als_rls_code = 'HNA'
-            THEN
-               IF is_party_processed(l_curr_party.par_refno, 'HNA') = 'N'
-               THEN
-                  create_assessment(p_assm_refno => l_assm_refno,
-                                    p_assm_asst_code => 'HNA',
-                                    p_assm_sequence => 1,
-                                    p_assm_assessment_date => l_als_info.decision_date,
-                                    p_assm_sco_code => 'PEN',
-                                    p_assm_ato_code => NULL,
-                                    p_assm_ipp_refno => 96,
-                                    p_assm_par_refno => l_curr_party.par_refno,
-                                    p_assm_aun_code => l_curr_party.app_aun_code,
-                                    p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
-                                    p_assm_created_by => l_als_info.als_created_by,
-                                    p_assm_created_date => l_als_info.als_created_date,
-                                    p_assm_modified_by => l_als_info.als_modified_by,
-                                    p_assm_modified_date => l_als_info.als_modified_date,
-                                    p_src_app_refno => l_curr_party.app_refno);
-                  
-                  process_hna_questions(p_app_refno => l_curr_party.app_refno,
-                                        p_assm_refno => l_assm_refno,
-                                        p_als_sco_code => l_als_info.als_sco_code,
-                                        p_als_hrv_sdr_code => l_als_info.reason,
-                                        p_als_rsd_hrv_lsd_code => l_als_info.outcome,
-                                        p_als_comments => l_als_info.als_comments,
-                                        p_als_created_by => l_als_info.als_created_by,
-                                        p_als_created_date => l_als_info.als_created_date,
-                                        p_als_auth_by => l_als_info.als_authorised_by,
-                                        p_als_auth_date => l_als_info.als_authorised_date);
-               ELSE
-                  dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
-               END IF;
-            ELSIF l_als_info.als_rls_code = 'APPRTR'
-            THEN
-               IF is_party_processed(l_curr_party.par_refno, 'TRHNA') = 'N'
-               THEN
-                  IF l_als_info.als_sco_code = 'AUT'
-                  THEN
-                     create_assessment(p_assm_refno => l_assm_refno,
-                                       p_assm_asst_code => 'TRHNA',
-                                       p_assm_sequence => 1,
-                                       p_assm_assessment_date => l_als_info.decision_date,
-                                       p_assm_sco_code => 'CLO',
-                                       p_assm_ato_code => l_als_info.outcome,
-                                       p_assm_ipp_refno => 90,
-                                       p_assm_par_refno => l_curr_party.par_refno,
-                                       p_assm_aun_code => l_curr_party.app_aun_code,
-                                       p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
-                                       p_assm_created_by => l_als_info.als_created_by,
-                                       p_assm_created_date => l_als_info.als_created_date,
-                                       p_assm_modified_by => l_als_info.als_authorised_by,
-                                       p_assm_modified_date => l_als_info.als_authorised_date,
-                                       p_src_app_refno => l_curr_party.app_refno);
-                                       
-                     process_apprtr_questions(p_assm_refno => l_assm_refno,
-                                              p_als_sco_code => l_als_info.als_sco_code,
-                                              p_als_hrv_sdr_code => l_als_info.reason,
-                                              p_als_rsd_hrv_lsd_code => l_als_info.outcome,
-                                              p_als_comments => l_als_info.als_comments,
-                                              p_als_decision_date => l_als_info.decision_date,
-                                              p_als_created_by => l_als_info.als_created_by,
-                                              p_als_created_date => l_als_info.als_created_date,
-                                              p_als_auth_by => l_als_info.als_authorised_by,
-                                              p_als_auth_date => l_als_info.als_authorised_date);
-                     
-                     a_assessments.review_assessment(l_assm_refno, l_als_info.als_authorised_date, FALSE);
-                     
-                     delete_resp_reviewed_assm(l_assm_refno);
-                  ELSE
-                     create_assessment(p_assm_refno => l_assm_refno,
-                                       p_assm_asst_code => 'TRHNA',
-                                       p_assm_sequence => 1,
-                                       p_assm_assessment_date => l_als_info.decision_date,
-                                       p_assm_sco_code => 'PEN',
-                                       p_assm_ato_code => l_als_info.outcome,
-                                       p_assm_ipp_refno => 90,
-                                       p_assm_par_refno => l_curr_party.par_refno,
-                                       p_assm_aun_code => l_curr_party.app_aun_code,
-                                       p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
-                                       p_assm_created_by => l_als_info.als_created_by,
-                                       p_assm_created_date => l_als_info.als_created_date,
-                                       p_assm_modified_by => l_als_info.als_authorised_by,
-                                       p_assm_modified_date => l_als_info.als_authorised_date,
-                                       p_src_app_refno => l_curr_party.app_refno);
-                                       
-                     process_apprtr_questions(p_assm_refno => l_assm_refno,
-                                              p_als_sco_code => l_als_info.als_sco_code,
-                                              p_als_hrv_sdr_code => l_als_info.reason,
-                                              p_als_rsd_hrv_lsd_code => l_als_info.outcome,
-                                              p_als_comments => l_als_info.als_comments,
-                                              p_als_decision_date => l_als_info.decision_date,
-                                              p_als_created_by => l_als_info.als_created_by,
-                                              p_als_created_date => l_als_info.als_created_date,
-                                              p_als_auth_by => l_als_info.als_authorised_by,
-                                              p_als_auth_date => l_als_info.als_authorised_date);
-                  END IF;
-               ELSE
-                  dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
-               END IF;
-            ELSIF l_als_info.als_rls_code = 'HNATR'
-            THEN
-               IF is_party_processed(l_curr_party.par_refno, 'TRHNA') = 'N'
-               THEN
-                  create_assessment(p_assm_refno => l_assm_refno,
-                                    p_assm_asst_code => 'TRHNA',
-                                    p_assm_sequence => 1,
-                                    p_assm_assessment_date => l_als_info.decision_date,
-                                    p_assm_sco_code => 'PEN',
-                                    p_assm_ato_code => NULL,
-                                    p_assm_ipp_refno => 90,
-                                    p_assm_par_refno => l_curr_party.par_refno,
-                                    p_assm_aun_code => l_curr_party.app_aun_code,
-                                    p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
-                                    p_assm_created_by => l_als_info.als_created_by,
-                                    p_assm_created_date => l_als_info.als_created_date,
-                                    p_assm_modified_by => l_als_info.als_modified_by,
-                                    p_assm_modified_date => l_als_info.als_modified_date,
-                                    p_src_app_refno => l_curr_party.app_refno);
-                                    
-                  process_hnatr_questions(p_app_refno => l_curr_party.app_refno,
-                                          p_assm_refno => l_assm_refno,
-                                          p_als_sco_code => l_als_info.als_sco_code,
-                                          p_als_hrv_sdr_code => l_als_info.reason,
-                                          p_als_rsd_hrv_lsd_code => l_als_info.outcome,
-                                          p_als_comments => l_als_info.als_comments,
-                                          p_als_created_by => l_als_info.als_created_by,
-                                          p_als_created_date => l_als_info.als_created_date,
-                                          p_als_auth_by => l_als_info.als_authorised_by,
-                                          p_als_auth_date => l_als_info.als_authorised_date);
-               ELSE
-                  dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
-               END IF;
-            END IF;
-         ELSIF l_count = 2
-         THEN
-            OPEN C_FIRST_ALS_INFO(l_curr_party.par_refno,
-                                  l_curr_party.app_refno);
-            FETCH C_FIRST_ALS_INFO INTO l_als_info_first;
-            CLOSE C_FIRST_ALS_INFO;
-         
-            IF l_als_info.als_rls_code = 'APPROVAL'
-            THEN
-               IF is_party_processed(l_curr_party.par_refno, 'HNA') = 'N'
-               THEN
-                  create_assessment(p_assm_refno => l_assm_refno,
-                                    p_assm_asst_code => 'HNA',
-                                    p_assm_sequence => 1,
-                                    p_assm_assessment_date => l_als_info.decision_date,
-                                    p_assm_sco_code => CASE l_als_info.als_sco_code
-                                                          WHEN 'PEN' THEN 'PEN'
-                                                          WHEN 'AUT' THEN 'CLO'
-                                                       END,
-                                    p_assm_ato_code => l_als_info.outcome,
-                                    p_assm_ipp_refno => 96,
-                                    p_assm_par_refno => l_curr_party.par_refno,
-                                    p_assm_aun_code => l_curr_party.app_aun_code,
-                                    p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
-                                    p_assm_created_by => l_als_info_first.als_created_by,
-                                    p_assm_created_date => l_als_info_first.als_created_date,
-                                    p_assm_modified_by => NVL(l_als_info_first.als_modified_by, l_als_info_first.als_created_by),
-                                    p_assm_modified_date => NVL(l_als_info_first.als_modified_date, l_als_info_first.als_created_date),
-                                    p_src_app_refno => l_curr_party.app_refno);
-                   
-                  process_hna_questions(p_app_refno => l_curr_party.app_refno,
-                                        p_assm_refno => l_assm_refno,
-                                        p_als_sco_code => l_als_info.als_sco_code,
-                                        p_als_hrv_sdr_code => l_als_info.reason,
-                                        p_als_rsd_hrv_lsd_code => l_als_info_first.outcome,
-                                        p_als_comments => l_als_info_first.als_comments,
-                                        p_als_created_by => l_als_info_first.als_created_by,
-                                        p_als_created_date => l_als_info_first.als_created_date,
-                                        p_als_auth_by => l_als_info.als_authorised_by,
-                                        p_als_auth_date => l_als_info.als_authorised_date);
-                  
-                  create_gqre(p_gqre_assm_refno => l_assm_refno,
-                              p_gqre_gque_reference => 198, 
-                              p_gqre_gcre_code => l_als_info.outcome,
-                              p_gqre_created_by => NVL(l_als_info.als_authorised_by, l_als_info.als_created_by),
-                              p_gqre_created_date => NVL(l_als_info.als_authorised_date, l_als_info.als_created_date));
-                  
-                  IF l_als_info.als_comments IS NOT NULL
-                  THEN                 
-                     create_gqre(p_gqre_assm_refno => l_assm_refno,
-                                 p_gqre_gque_reference => 200, 
-                                 p_gqre_text_value => l_als_info.als_comments,
-                                 p_gqre_created_by => NVL(l_als_info.als_authorised_by, l_als_info.als_created_by),
-                                 p_gqre_created_date => NVL(l_als_info.als_authorised_date, l_als_info.als_created_date));
-                  END IF;
-
-                  create_gqre(p_gqre_assm_refno => l_assm_refno,
-                              p_gqre_gque_reference => 201, 
-                              p_gqre_date_value => l_als_info.decision_date,
-                              p_gqre_created_by => NVL(l_als_info.als_authorised_by, l_als_info.als_created_by),
-                              p_gqre_created_date => NVL(l_als_info.als_authorised_date, l_als_info.als_created_date));
-
-                  a_assessments.review_assessment(l_assm_refno, NVL(l_als_info_first.als_modified_date, l_als_info_first.als_created_date), FALSE);
-
-                  delete_resp_reviewed_assm(l_assm_refno);
-               ELSE
-                  dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
-               END IF;
-            ELSIF l_als_info.als_rls_code = 'HNA'
-            THEN
-               IF is_party_processed(l_curr_party.par_refno, 'HNA') = 'N'
-               THEN
-                  create_assessment(p_assm_refno => l_assm_refno,
-                                    p_assm_asst_code => 'HNA',
-                                    p_assm_sequence => 1,
-                                    p_assm_assessment_date => l_als_info_first.decision_date,
-                                    p_assm_sco_code => 'CLO',
-                                    p_assm_ato_code => l_als_info_first.outcome,
-                                    p_assm_ipp_refno => 96,
-                                    p_assm_par_refno => l_curr_party.par_refno,
-                                    p_assm_aun_code => l_curr_party.app_aun_code,
-                                    p_assm_status_date => NVL(l_als_info_first.als_status_date, l_als_info_first.als_created_date),
-                                    p_assm_created_by => l_als_info_first.als_created_by,
-                                    p_assm_created_date => l_als_info_first.als_created_date,
-                                    p_assm_modified_by => l_als_info_first.als_authorised_by,
-                                    p_assm_modified_date => l_als_info_first.als_authorised_date,
-                                    p_src_app_refno => l_curr_party.app_refno);
-                                    
-                  process_approval_questions(p_assm_refno => l_assm_refno,
-                                             p_als_sco_code => l_als_info_first.als_sco_code,
-                                             p_als_hrv_sdr_code => l_als_info_first.reason,
-                                             p_als_rsd_hrv_lsd_code => l_als_info_first.outcome,
-                                             p_als_comments => l_als_info_first.als_comments,
-                                             p_als_decision_date => l_als_info_first.decision_date,
-                                             p_als_created_by => l_als_info_first.als_created_by,
-                                             p_als_created_date => l_als_info_first.als_created_date,
-                                             p_als_auth_by => l_als_info_first.als_authorised_by,
-                                             p_als_auth_date => l_als_info_first.als_authorised_date);
-                              
-                  l_assm_refno := assm_refno_seq.NEXTVAL;
-                  
-                  create_assessment(p_assm_refno => l_assm_refno,
-                                    p_assm_asst_code => 'HNA',
-                                    p_assm_sequence => 2,
-                                    p_assm_assessment_date => l_als_info.decision_date,
-                                    p_assm_sco_code => 'PEN',
-                                    p_assm_ato_code => NULL,
-                                    p_assm_ipp_refno => 96,
-                                    p_assm_par_refno => l_curr_party.par_refno,
-                                    p_assm_aun_code => l_curr_party.app_aun_code,
-                                    p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
-                                    p_assm_created_by => l_als_info.als_created_by,
-                                    p_assm_created_date => l_als_info.als_created_date,
-                                    p_assm_modified_by => l_als_info.als_modified_by,
-                                    p_assm_modified_date => l_als_info.als_modified_date,
-                                    p_src_app_refno => l_curr_party.app_refno);
-                                    
-                  process_hna_questions(p_app_refno => l_curr_party.app_refno,
-                                        p_assm_refno => l_assm_refno,
-                                        p_als_sco_code => l_als_info.als_sco_code,
-                                        p_als_hrv_sdr_code => l_als_info.reason,
-                                        p_als_rsd_hrv_lsd_code => l_als_info.outcome,
-                                        p_als_comments => l_als_info.als_comments,
-                                        p_als_created_by => l_als_info.als_created_by,
-                                        p_als_created_date => l_als_info.als_created_date,
-                                        p_als_auth_by => l_als_info.als_authorised_by,
-                                        p_als_auth_date => l_als_info.als_authorised_date);
-               ELSE
-                  dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
-               END IF;
-            ELSIF l_als_info.als_rls_code = 'APPRTR'
-            THEN
-               IF is_party_processed(l_curr_party.par_refno, 'TRHNA') = 'N'
-               THEN
-                  create_assessment(p_assm_refno => l_assm_refno,
-                                    p_assm_asst_code => 'TRHNA',
-                                    p_assm_sequence => 1,
-                                    p_assm_assessment_date => l_als_info.decision_date,
-                                    p_assm_sco_code => CASE l_als_info.als_sco_code
-                                                          WHEN 'PEN' THEN 'PEN'
-                                                          WHEN 'AUT' THEN 'CLO'
-                                                       END,
-                                    p_assm_ato_code => l_als_info.outcome,
-                                    p_assm_ipp_refno => 90,
-                                    p_assm_par_refno => l_curr_party.par_refno,
-                                    p_assm_aun_code => l_curr_party.app_aun_code,
-                                    p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
-                                    p_assm_created_by => l_als_info_first.als_created_by,
-                                    p_assm_created_date => l_als_info_first.als_created_date,
-                                    p_assm_modified_by => NVL(l_als_info.als_modified_by, l_als_info.als_created_by),
-                                    p_assm_modified_date => NVL(l_als_info.als_modified_date, l_als_info.als_created_date),
-                                    p_src_app_refno => l_curr_party.app_refno);
-                                    
-                  process_hnatr_questions(p_app_refno => l_curr_party.app_refno,
-                                          p_assm_refno => l_assm_refno,
-                                          p_als_sco_code => l_als_info.als_sco_code,
-                                          p_als_hrv_sdr_code => l_als_info.reason,
-                                          p_als_rsd_hrv_lsd_code => l_als_info_first.outcome,
-                                          p_als_comments => l_als_info_first.als_comments,
-                                          p_als_created_by => l_als_info_first.als_created_by,
-                                          p_als_created_date => l_als_info_first.als_created_date,
-                                          p_als_auth_by => l_als_info.als_authorised_by,
-                                          p_als_auth_date => l_als_info.als_authorised_date);
-                  
-                  create_gqre(p_gqre_assm_refno => l_assm_refno,
-                              p_gqre_gque_reference => 295, 
-                              p_gqre_gcre_code => l_als_info.outcome,
-                              p_gqre_created_by => NVL(l_als_info.als_authorised_by, l_als_info.als_created_by),
-                              p_gqre_created_date => NVL(l_als_info.als_authorised_date, l_als_info.als_created_date));
-                  
-                  IF l_als_info.als_comments IS NOT NULL
-                  THEN
-                     create_gqre(p_gqre_assm_refno => l_assm_refno,
-                                 p_gqre_gque_reference => 200, 
-                                 p_gqre_text_value => l_als_info.als_comments,
-                                 p_gqre_created_by => NVL(l_als_info.als_authorised_by, l_als_info.als_created_by),
-                                 p_gqre_created_date => NVL(l_als_info.als_authorised_date, l_als_info.als_created_date));
-                  END IF;
-
-                  create_gqre(p_gqre_assm_refno => l_assm_refno,
-                              p_gqre_gque_reference => 201, 
-                              p_gqre_date_value => l_als_info.decision_date,
-                              p_gqre_created_by => NVL(l_als_info.als_authorised_by, l_als_info.als_created_by),
-                              p_gqre_created_date => NVL(l_als_info.als_authorised_date, l_als_info.als_created_date));
-                              
-                  a_assessments.review_assessment(l_assm_refno, NVL(l_als_info.als_modified_date, l_als_info.als_created_date), FALSE);
-                  
-                  delete_resp_reviewed_assm(l_assm_refno);
-               ELSE
-                  dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
-               END IF;
-            ELSIF l_als_info.als_rls_code = 'HNATR'
-            THEN
-               IF is_party_processed(l_curr_party.par_refno, 'TRHNA') = 'N'
-               THEN
-                  create_assessment(p_assm_refno => l_assm_refno,
-                                    p_assm_asst_code => 'TRHNA',
-                                    p_assm_sequence => 1,
-                                    p_assm_assessment_date => l_als_info_first.decision_date,
-                                    p_assm_sco_code => 'CLO',
-                                    p_assm_ato_code => l_als_info_first.outcome,
-                                    p_assm_ipp_refno => 90,
-                                    p_assm_par_refno => l_curr_party.par_refno,
-                                    p_assm_aun_code => l_curr_party.app_aun_code,
-                                    p_assm_status_date => NVL(l_als_info_first.als_status_date, l_als_info_first.als_created_date),
-                                    p_assm_created_by => l_als_info_first.als_created_by,
-                                    p_assm_created_date => l_als_info_first.als_created_date,
-                                    p_assm_modified_by => l_als_info_first.als_authorised_by,
-                                    p_assm_modified_date => l_als_info_first.als_authorised_date,
-                                    p_src_app_refno => l_curr_party.app_refno);
-                                    
-                  process_apprtr_questions(p_assm_refno => l_assm_refno,
-                                           p_als_sco_code => l_als_info_first.als_sco_code,
-                                           p_als_hrv_sdr_code => l_als_info_first.reason,
+                      
+                     process_hna_questions(p_app_refno => l_curr_party.app_refno,
+                                           p_assm_refno => l_assm_refno,
+                                           p_als_sco_code => l_als_info.als_sco_code,
+                                           p_als_hrv_sdr_code => l_als_info.reason,
                                            p_als_rsd_hrv_lsd_code => l_als_info_first.outcome,
                                            p_als_comments => l_als_info_first.als_comments,
-                                           p_als_decision_date => l_als_info_first.decision_date,
                                            p_als_created_by => l_als_info_first.als_created_by,
                                            p_als_created_date => l_als_info_first.als_created_date,
-                                           p_als_auth_by => l_als_info_first.als_authorised_by,
-                                           p_als_auth_date => l_als_info_first.als_authorised_date);   
+                                           p_als_auth_by => l_als_info.als_authorised_by,
+                                           p_als_auth_date => l_als_info.als_authorised_date);
+                     
+                     create_gqre(p_gqre_assm_refno => l_assm_refno,
+                                 p_gqre_gque_reference => 198, 
+                                 p_gqre_gcre_code => l_als_info.outcome,
+                                 p_gqre_created_by => NVL(l_als_info.als_authorised_by, l_als_info.als_created_by),
+                                 p_gqre_created_date => NVL(l_als_info.als_authorised_date, l_als_info.als_created_date));
+                     
+                     IF l_als_info.als_comments IS NOT NULL
+                     THEN                 
+                        create_gqre(p_gqre_assm_refno => l_assm_refno,
+                                    p_gqre_gque_reference => 200, 
+                                    p_gqre_text_value => l_als_info.als_comments,
+                                    p_gqre_created_by => NVL(l_als_info.als_authorised_by, l_als_info.als_created_by),
+                                    p_gqre_created_date => NVL(l_als_info.als_authorised_date, l_als_info.als_created_date));
+                     END IF;
 
-                  l_assm_refno := assm_refno_seq.NEXTVAL;
-                  
-                  create_assessment(p_assm_refno => l_assm_refno,
-                                    p_assm_asst_code => 'TRHNA',
-                                    p_assm_sequence => 2,
-                                    p_assm_assessment_date => l_als_info.decision_date,
-                                    p_assm_sco_code => 'PEN',
-                                    p_assm_ato_code => NULL,
-                                    p_assm_ipp_refno => 90,
-                                    p_assm_par_refno => l_curr_party.par_refno,
-                                    p_assm_aun_code => l_curr_party.app_aun_code,
-                                    p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
-                                    p_assm_created_by => l_als_info.als_created_by,
-                                    p_assm_created_date => l_als_info.als_created_date,
-                                    p_assm_modified_by => l_als_info.als_modified_by,
-                                    p_assm_modified_date => l_als_info.als_modified_date,
-                                    p_src_app_refno => l_curr_party.app_refno);
-                                    
-                  process_hnatr_questions(p_app_refno => l_curr_party.app_refno,
-                                          p_assm_refno => l_assm_refno,
-                                          p_als_sco_code => l_als_info.als_sco_code,
-                                          p_als_hrv_sdr_code => l_als_info.reason,
-                                          p_als_rsd_hrv_lsd_code => l_als_info.outcome,
-                                          p_als_comments => l_als_info.als_comments,
-                                          p_als_created_by => l_als_info.als_created_by,
-                                          p_als_created_date => l_als_info.als_created_date,
-                                          p_als_auth_by => l_als_info.als_authorised_by,
-                                          p_als_auth_date => l_als_info.als_authorised_date);
-               ELSE
-                  dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
+                     create_gqre(p_gqre_assm_refno => l_assm_refno,
+                                 p_gqre_gque_reference => 201, 
+                                 p_gqre_date_value => l_als_info.decision_date,
+                                 p_gqre_created_by => NVL(l_als_info.als_authorised_by, l_als_info.als_created_by),
+                                 p_gqre_created_date => NVL(l_als_info.als_authorised_date, l_als_info.als_created_date));
+
+                     a_assessments.review_assessment(l_assm_refno, NVL(l_als_info_first.als_modified_date, l_als_info_first.als_created_date), FALSE);
+
+                     delete_resp_reviewed_assm(l_assm_refno);
+                  ELSE
+                     dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
+                  END IF;
+               ELSIF l_als_info.als_rls_code = 'HNA'
+               THEN
+                  IF is_party_processed(l_curr_party.par_refno, 'HNA') = 'N'
+                  THEN
+                     create_assessment(p_assm_refno => l_assm_refno,
+                                       p_assm_asst_code => 'HNA',
+                                       p_assm_sequence => 1,
+                                       p_assm_assessment_date => l_als_info_first.decision_date,
+                                       p_assm_sco_code => 'CLO',
+                                       p_assm_ato_code => l_als_info_first.outcome,
+                                       p_assm_ipp_refno => 96,
+                                       p_assm_par_refno => l_curr_party.par_refno,
+                                       p_assm_aun_code => l_curr_party.app_aun_code,
+                                       p_assm_status_date => NVL(l_als_info_first.als_status_date, l_als_info_first.als_created_date),
+                                       p_assm_created_by => l_als_info_first.als_created_by,
+                                       p_assm_created_date => l_als_info_first.als_created_date,
+                                       p_assm_modified_by => l_als_info_first.als_authorised_by,
+                                       p_assm_modified_date => l_als_info_first.als_authorised_date,
+                                       p_src_app_refno => l_curr_party.app_refno);
+                                       
+                     process_approval_questions(p_assm_refno => l_assm_refno,
+                                                p_als_sco_code => l_als_info_first.als_sco_code,
+                                                p_als_hrv_sdr_code => l_als_info_first.reason,
+                                                p_als_rsd_hrv_lsd_code => l_als_info_first.outcome,
+                                                p_als_comments => l_als_info_first.als_comments,
+                                                p_als_decision_date => l_als_info_first.decision_date,
+                                                p_als_created_by => l_als_info_first.als_created_by,
+                                                p_als_created_date => l_als_info_first.als_created_date,
+                                                p_als_auth_by => l_als_info_first.als_authorised_by,
+                                                p_als_auth_date => l_als_info_first.als_authorised_date);
+                                 
+                     l_assm_refno := assm_refno_seq.NEXTVAL;
+                     
+                     create_assessment(p_assm_refno => l_assm_refno,
+                                       p_assm_asst_code => 'HNA',
+                                       p_assm_sequence => 2,
+                                       p_assm_assessment_date => l_als_info.decision_date,
+                                       p_assm_sco_code => 'PEN',
+                                       p_assm_ato_code => NULL,
+                                       p_assm_ipp_refno => 96,
+                                       p_assm_par_refno => l_curr_party.par_refno,
+                                       p_assm_aun_code => l_curr_party.app_aun_code,
+                                       p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
+                                       p_assm_created_by => l_als_info.als_created_by,
+                                       p_assm_created_date => l_als_info.als_created_date,
+                                       p_assm_modified_by => l_als_info.als_modified_by,
+                                       p_assm_modified_date => l_als_info.als_modified_date,
+                                       p_src_app_refno => l_curr_party.app_refno);
+                                       
+                     process_hna_questions(p_app_refno => l_curr_party.app_refno,
+                                           p_assm_refno => l_assm_refno,
+                                           p_als_sco_code => l_als_info.als_sco_code,
+                                           p_als_hrv_sdr_code => l_als_info.reason,
+                                           p_als_rsd_hrv_lsd_code => l_als_info.outcome,
+                                           p_als_comments => l_als_info.als_comments,
+                                           p_als_created_by => l_als_info.als_created_by,
+                                           p_als_created_date => l_als_info.als_created_date,
+                                           p_als_auth_by => l_als_info.als_authorised_by,
+                                           p_als_auth_date => l_als_info.als_authorised_date);
+                  ELSE
+                     dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
+                  END IF;
+               ELSIF l_als_info.als_rls_code = 'APPRTR'
+               THEN
+                  IF is_party_processed(l_curr_party.par_refno, 'TRHNA') = 'N'
+                  THEN
+                     create_assessment(p_assm_refno => l_assm_refno,
+                                       p_assm_asst_code => 'TRHNA',
+                                       p_assm_sequence => 1,
+                                       p_assm_assessment_date => l_als_info.decision_date,
+                                       p_assm_sco_code => CASE l_als_info.als_sco_code
+                                                             WHEN 'PEN' THEN 'PEN'
+                                                             WHEN 'AUT' THEN 'CLO'
+                                                          END,
+                                       p_assm_ato_code => l_als_info.outcome,
+                                       p_assm_ipp_refno => 90,
+                                       p_assm_par_refno => l_curr_party.par_refno,
+                                       p_assm_aun_code => l_curr_party.app_aun_code,
+                                       p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
+                                       p_assm_created_by => l_als_info_first.als_created_by,
+                                       p_assm_created_date => l_als_info_first.als_created_date,
+                                       p_assm_modified_by => NVL(l_als_info.als_modified_by, l_als_info.als_created_by),
+                                       p_assm_modified_date => NVL(l_als_info.als_modified_date, l_als_info.als_created_date),
+                                       p_src_app_refno => l_curr_party.app_refno);
+                                       
+                     process_hnatr_questions(p_app_refno => l_curr_party.app_refno,
+                                             p_assm_refno => l_assm_refno,
+                                             p_als_sco_code => l_als_info.als_sco_code,
+                                             p_als_hrv_sdr_code => l_als_info.reason,
+                                             p_als_rsd_hrv_lsd_code => l_als_info_first.outcome,
+                                             p_als_comments => l_als_info_first.als_comments,
+                                             p_als_created_by => l_als_info_first.als_created_by,
+                                             p_als_created_date => l_als_info_first.als_created_date,
+                                             p_als_auth_by => l_als_info.als_authorised_by,
+                                             p_als_auth_date => l_als_info.als_authorised_date);
+                     
+                     create_gqre(p_gqre_assm_refno => l_assm_refno,
+                                 p_gqre_gque_reference => 295, 
+                                 p_gqre_gcre_code => l_als_info.outcome,
+                                 p_gqre_created_by => NVL(l_als_info.als_authorised_by, l_als_info.als_created_by),
+                                 p_gqre_created_date => NVL(l_als_info.als_authorised_date, l_als_info.als_created_date));
+                     
+                     IF l_als_info.als_comments IS NOT NULL
+                     THEN
+                        create_gqre(p_gqre_assm_refno => l_assm_refno,
+                                    p_gqre_gque_reference => 200, 
+                                    p_gqre_text_value => l_als_info.als_comments,
+                                    p_gqre_created_by => NVL(l_als_info.als_authorised_by, l_als_info.als_created_by),
+                                    p_gqre_created_date => NVL(l_als_info.als_authorised_date, l_als_info.als_created_date));
+                     END IF;
+
+                     create_gqre(p_gqre_assm_refno => l_assm_refno,
+                                 p_gqre_gque_reference => 201, 
+                                 p_gqre_date_value => l_als_info.decision_date,
+                                 p_gqre_created_by => NVL(l_als_info.als_authorised_by, l_als_info.als_created_by),
+                                 p_gqre_created_date => NVL(l_als_info.als_authorised_date, l_als_info.als_created_date));
+                                 
+                     a_assessments.review_assessment(l_assm_refno, NVL(l_als_info.als_modified_date, l_als_info.als_created_date), FALSE);
+                     
+                     delete_resp_reviewed_assm(l_assm_refno);
+                  ELSE
+                     dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
+                  END IF;
+               ELSIF l_als_info.als_rls_code = 'HNATR'
+               THEN
+                  IF is_party_processed(l_curr_party.par_refno, 'TRHNA') = 'N'
+                  THEN
+                     create_assessment(p_assm_refno => l_assm_refno,
+                                       p_assm_asst_code => 'TRHNA',
+                                       p_assm_sequence => 1,
+                                       p_assm_assessment_date => l_als_info_first.decision_date,
+                                       p_assm_sco_code => 'CLO',
+                                       p_assm_ato_code => l_als_info_first.outcome,
+                                       p_assm_ipp_refno => 90,
+                                       p_assm_par_refno => l_curr_party.par_refno,
+                                       p_assm_aun_code => l_curr_party.app_aun_code,
+                                       p_assm_status_date => NVL(l_als_info_first.als_status_date, l_als_info_first.als_created_date),
+                                       p_assm_created_by => l_als_info_first.als_created_by,
+                                       p_assm_created_date => l_als_info_first.als_created_date,
+                                       p_assm_modified_by => l_als_info_first.als_authorised_by,
+                                       p_assm_modified_date => l_als_info_first.als_authorised_date,
+                                       p_src_app_refno => l_curr_party.app_refno);
+                                       
+                     process_apprtr_questions(p_assm_refno => l_assm_refno,
+                                              p_als_sco_code => l_als_info_first.als_sco_code,
+                                              p_als_hrv_sdr_code => l_als_info_first.reason,
+                                              p_als_rsd_hrv_lsd_code => l_als_info_first.outcome,
+                                              p_als_comments => l_als_info_first.als_comments,
+                                              p_als_decision_date => l_als_info_first.decision_date,
+                                              p_als_created_by => l_als_info_first.als_created_by,
+                                              p_als_created_date => l_als_info_first.als_created_date,
+                                              p_als_auth_by => l_als_info_first.als_authorised_by,
+                                              p_als_auth_date => l_als_info_first.als_authorised_date);   
+
+                     l_assm_refno := assm_refno_seq.NEXTVAL;
+                     
+                     create_assessment(p_assm_refno => l_assm_refno,
+                                       p_assm_asst_code => 'TRHNA',
+                                       p_assm_sequence => 2,
+                                       p_assm_assessment_date => l_als_info.decision_date,
+                                       p_assm_sco_code => 'PEN',
+                                       p_assm_ato_code => NULL,
+                                       p_assm_ipp_refno => 90,
+                                       p_assm_par_refno => l_curr_party.par_refno,
+                                       p_assm_aun_code => l_curr_party.app_aun_code,
+                                       p_assm_status_date => NVL(l_als_info.als_status_date, l_als_info.als_created_date),
+                                       p_assm_created_by => l_als_info.als_created_by,
+                                       p_assm_created_date => l_als_info.als_created_date,
+                                       p_assm_modified_by => l_als_info.als_modified_by,
+                                       p_assm_modified_date => l_als_info.als_modified_date,
+                                       p_src_app_refno => l_curr_party.app_refno);
+                                       
+                     process_hnatr_questions(p_app_refno => l_curr_party.app_refno,
+                                             p_assm_refno => l_assm_refno,
+                                             p_als_sco_code => l_als_info.als_sco_code,
+                                             p_als_hrv_sdr_code => l_als_info.reason,
+                                             p_als_rsd_hrv_lsd_code => l_als_info.outcome,
+                                             p_als_comments => l_als_info.als_comments,
+                                             p_als_created_by => l_als_info.als_created_by,
+                                             p_als_created_date => l_als_info.als_created_date,
+                                             p_als_auth_by => l_als_info.als_authorised_by,
+                                             p_als_auth_date => l_als_info.als_authorised_date);
+                  ELSE
+                     dbms_output.put_line('Assessment already exists for party ' || l_curr_party.par_refno);
+                  END IF;
                END IF;
             END IF;
+         ELSE
+            dbms_output.put_line('Application ' || l_curr_party.app_refno || ' has more than 2 decisions');
          END IF;
-      ELSE
-         dbms_output.put_line('Application ' || l_curr_party.app_refno || ' has more than 2 decisions');
-      END IF;
+      EXCEPTION
+         WHEN OTHERS THEN
+            dbms_output.put_line('Issue with processing application ' || l_curr_party.app_refno);
+      END;
    END LOOP;
 EXCEPTION
 WHEN OTHERS THEN
