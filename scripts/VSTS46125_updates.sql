@@ -136,8 +136,7 @@ USING (SELECT ale_app_refno app_refno,
        AND src.rn = 1)
  WHEN MATCHED THEN
     UPDATE
-       SET tgt.app_aun_code = src.app_aun_code
-     WHERE tgt.app_aun_code != src.app_aun_code;
+       SET tgt.app_aun_code = src.app_aun_code;
 
 -- Applications do not have GEN, CHP or COOP list entry
 MERGE INTO applic_list_entries tgt
@@ -172,8 +171,7 @@ USING (SELECT ale_app_refno app_refno,
        AND src.rn = 1)
  WHEN MATCHED THEN
     UPDATE
-       SET tgt.app_aun_code = src.app_aun_code
-     WHERE tgt.app_aun_code != src.app_aun_code;      
+       SET tgt.app_aun_code = src.app_aun_code;      
 
 -----------------------------------------------------------------------------------   
 -- 1. Admin Unit on restricted party
