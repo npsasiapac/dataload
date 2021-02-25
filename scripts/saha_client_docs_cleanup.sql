@@ -872,3 +872,14 @@ DROP TABLE SAHA_CLIENT_DOCS_CLEANUP;
 
 PROMPT Finished Bulk Deletes
 PROMPT Finished VSTS 46193
+
+PROMPT Updating Document Types for Req 48335
+
+UPDATE client_documents
+SET cdo_hrv_cdt_code = 'LTROR'
+WHERE cdo_uploaded_by = 'PRINTHOUSE'
+AND substr(cdo_file_name, 1, instr(cdo_file_name, '_')-1) IN ('REGAUDITCAT1','REGAUDITOUT','REGCANC','REGDEFER','REGAUDIT')
+AND cdo_hrv_cdt_code != 'LTROR';
+
+COMMIT;
+PROMPT Finished Update
