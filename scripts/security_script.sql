@@ -9131,5 +9131,63 @@ EXCEPTION
     dbms_output.put_line('Failed to insert CLIAPINS into action group HSA_APP_MAINT');
 END;
 /
+BEGIN
+    insert into navigation_action_groups(NAG_AGP_NAME
+                                        ,NAG_NAC_ACT_CODE
+                                        ,NAG_NAC_SCO_CODE
+                                        ,NAG_NAC_MODULE_FROM
+                                        ,NAG_NAC_BLOCK_FROM
+                                        ,NAG_NAC_ITEM_FROM
+                                        ,NAG_NAC_MODULE_TO
+                                        ,NAG_NAC_BLOCK_TO
+                                        ,NAG_NAC_ITEM_TO
+                                        ,NAG_USAGE
+                                        ,NAG_NAC_TYPE_FROM
+                                        ,NAG_NAC_TYPE_VALUE_FROM
+                                        ,NAG_NAC_TYPE_TO
+                                        ,NAG_NAC_TYPE_VALUE_TO
+                                        ,NAG_CREATED_DATE
+                                        ,NAG_CREATED_BY
+                                        ,NAG_RELEASE_VERS)
+    select 'HSA_HOPCLI_V'
+    ,      nac_act_code
+    ,      nac_sco_code
+    ,      nac_module_from
+    ,      nac_block_from
+    ,      nac_item_from
+    ,      nac_module_to
+    ,      nac_block_to
+    ,      nac_item_to
+    ,      'USR'
+    ,     nac_type_from
+    ,     nac_type_value_from
+    ,     nac_type_to
+    ,     nac_type_value_to
+    ,     sysdate
+    ,     'NPSHPATEL'
+    ,    '6.12.0'
+    from navigation_actions
+    where nac_act_code = 'PARDV10'
+    and nac_module_from = 'APP053'
+    and nac_module_to = 'PAR015'
+    and nac_block_from = 'MASTER'
+    and nac_block_to = 'CONTACT_DETAILS_DV'
+    AND NOT EXISTS (SELECT NULL
+                    FROM navigation_action_groups
+                    WHERE NAG_AGP_NAME = 'HSA_HOPCLI_V'
+                    AND NAG_NAC_ACT_CODE = 'PARDV10'
+                    AND NAG_NAC_MODULE_FROM = 'APP053'
+                    AND NAG_NAC_MODULE_TO = 'PAR015'
+                    AND NAG_NAC_BLOCK_FROM = 'MASTER'
+                    AND NAG_NAC_BLOCK_TO = 'CONTACT_DETAILS_DV');
+    
+    if sql%rowcount = 0 then
+      dbms_output.put_line('Action PARDV10 already exists in action group HSA_HOPCLI_V');
+    end if;
+EXCEPTION
+  WHEN OTHERS THEN 
+    dbms_output.put_line('Failed to insert PARDV10 into action group HSA_HOPCLI_V');
+END;
+/
 commit;
 SPOO OFF
