@@ -1646,25 +1646,26 @@ USING (SELECT ecr_apt_code,
     VALUES(src.ecr_apt_code, 
            src.ecr_hhts_hrv_els_code, 
            src.ecr_hhts_hty_code);
-
+spoo off
 SPOO op_accg_vals.log
 SET LONG 32000
 SET LINESIZE 32000
 SELECT * from applic_cat_rule_conditions WHERE accg_acpr_acps_hrv_prs_code IN ('PSCOOP','PSCHP');
 DELETE FROM applic_cat_rule_conditions WHERE accg_acpr_acps_hrv_prs_code IN ('PSCOOP','PSCHP');
-
+spoo off
 SPOO op_acpr_vals.log
 SET LONG 32000
 SET LINESIZE 32000
 SELECT * FROM applic_cat_pri_sch_rules WHERE acpr_acps_hrv_prs_code IN ('PSCOOP','PSCHP');
 DELETE FROM applic_cat_pri_sch_rules WHERE acpr_acps_hrv_prs_code IN ('PSCOOP','PSCHP');
-
+spoo off
 SPOO op_acpr_vals.log
 SET LONG 32000
 SET LINESIZE 32000
 SELECT * FROM applic_cat_pri_sch_rules WHERE acpr_acps_hrv_prs_code IN ('PSCOOP','PSCHP');
 DELETE FROM applic_category_pri_schemes WHERE acps_hrv_prs_code IN ('PSCOOP','PSCHP');
 
+SPOO off
 SPOO op_config_install.log APPEND
 SET LONG 32000
 SET LINESIZE 32000
@@ -1745,6 +1746,7 @@ USING (SELECT slc_code spl_slc_code,
            src.spl_apt_code, 
            src.spl_generate_ind);
 
+spoo off
 REM INSERTING into DFLT_QUESTION_RESTRICTS
 spoo op_dflt_vals.log
 SET LONG 32000
@@ -1753,6 +1755,7 @@ SET PAGES 0
 SELECT * FROM dflt_question_restricts;
 DELETE FROM dflt_question_restricts;
 
+spoo off
 spoo op_config_install.log APPEND
 exec cre_dqr(845,5,'Y',203,'ACAC','=',null,'Y');
 exec cre_dqr(4550,10,'N',521,'ACAC',null,null,null);
@@ -3974,6 +3977,7 @@ UPDATE hhold_type_elig_schemes
    SET hhts_heg_code = 'COUPLES'
  WHERE hhts_heg_code = 'COUPLESAB';
 
+spoo off
 REM INSERTING into ELIG_GROUP_RULE_QUESTIONS
 SPOO op_egr_vals.log
 SET LONG 32000
@@ -3982,7 +3986,7 @@ SET PAGES 0
 
 SELECT * FROM elig_group_rule_questions;
 DELETE FROM elig_group_rule_questions;
-
+spoo offf
 SPOO op_config_install.log APPEND
 exec cre_egr(313,'COUPLES',10,2,2,null);
 exec cre_egr(227,'COUPLESAB',30,null,null,'Y');
@@ -4397,13 +4401,13 @@ exec cre_lar('SLOL','Slovanic Life Housing Co-op','Y',3530,'C','COOPPREF','LAR',
 exec cre_lar('YOCH','YOCHI Inc','Y',3540,'C','COOPPREF','LAR','YOCH');
 
 UPDATE lettings_areas SET lar_lar_code = 'FA' WHERE lar_lar_code = 'NA';
-
+spoo off
 SPOO op_lar_vals.log
 SET LONG 32000
 SET LINESIZE 32000
 SELECT * FROM lettings_areas WHERE lar_code = 'NA';
 DELETE FROM lettings_areas WHERE lar_code = 'NA';
-
+spoo off
 SPOO op_config_install.log APPEND
 SET LONG 32000
 SET LINESIZE 32000
@@ -4475,31 +4479,31 @@ UPDATE lettings_areas SET lar_lar_code = 'FA' WHERE lar_code = 'LAR187';
     Remove the bits AND pieces from shortlists which are being retired
 
 */
-
+spoo off
 SPOO op_gan_values.log
 SET LONG 32000
 SET LINESIZE 32000
 SELECT * FROM general_answers where gan_que_refno IN (199, 209, 215, 224, 226, 228, 236, 246, 252, 269, 276, 285, 300, 302, 238, 271, 295);
 DELETE FROM general_answers WHERE gan_que_refno IN (199, 209, 215, 224, 226, 228, 236, 246, 252, 269, 276, 285, 300, 302, 238, 271, 295);
-
+spoo off
 SPOO op_laa_values.log
 SET LONG 32000
 SET LINESIZE 32000
 SELECT * FROM lettings_area_answers WHERE laa_lar_code IN ('AACC','ACCH','ARKH','DASH','FRED','HELP','IDAA','KICH','MEHC','NORS','PORT','SOUH','WAIS','WESC','UNIS');
 DELETE FROM lettings_area_answers WHERE laa_lar_code IN ('AACC','ACCH','ARKH','DASH','FRED','HELP','IDAA','KICH','MEHC','NORS','PORT','SOUH','WAIS','WESC','UNIS');
-
+spoo off
 SPOO op_lar_values.log
 SET LONG 32000
 SET LINESIZE 32000
 SELECT * FROM lettings_areas WHERE lar_code IN ('AACC','ACCH','ARKH','DASH','FRED','HELP','IDAA','KICH','MEHC','NORS','PORT','SOUH','WAIS','WESC','UNIS');
 DELETE FROM lettings_areas WHERE lar_code IN ('AACC','ACCH','ARKH','DASH','FRED','HELP','IDAA','KICH','MEHC','NORS','PORT','SOUH','WAIS','WESC','UNIS');
-
+spoo off
 SPOO op_att_values.log
 SET LONG 32000
 SET LINESIZE 32000
 SELECT * FROM attributes WHERE att_ele_code = 'LAR' AND att_code IN ('AACC','ACCH','ARKH','DASH','FRED','HELP','IDAA','KICH','MEHC','NORS','PORT','SOUH','WAIS','WESC','UNIS');
 DELETE FROM attributes WHERE att_ele_code = 'LAR' AND att_code IN ('AACC','ACCH','ARKH','DASH','FRED','HELP','IDAA','KICH','MEHC','NORS','PORT','SOUH','WAIS','WESC','UNIS');
-
+spoo off
 SPOO op_dqu_values.log APPEND
 SET LONG 32000
 SET LINESIZE 32000
@@ -4508,13 +4512,13 @@ DELETE FROM derived_question_usages WHERE dqu_dqh_refno = 20000 AND dqu_dqc_seqn
 
 SELECT * FROM derived_question_usages WHERE dqu_que_refno IN (199, 209, 215, 224, 226, 228, 236, 246, 252, 269, 276, 285, 300, 302, 238, 271, 295);
 DELETE FROM derived_question_usages WHERE dqu_que_refno IN (199, 209, 215, 224, 226, 228, 236, 246, 252, 269, 276, 285, 300, 302, 238, 271, 295);
-
+spoo off
 SPOO op_dqc_vals.log
 SET LONG 32000
 SET LINESIZE 32000
 SELECT * FROM derived_question_clauses WHERE dqc_dqh_refno = 20000 AND dqc_seqno IN (1, 4, 6, 10, 11, 12, 16, 20, 23, 26, 29, 33, 39, 40, 17, 27, 37);
 DELETE FROM derived_question_clauses WHERE dqc_dqh_refno = 20000 AND dqc_seqno IN (1, 4, 6, 10, 11, 12, 16, 20, 23, 26, 29, 33, 39, 40, 17, 27, 37);
-
+spoo off
 SPOO op_dqr_vals.log
 SET LONG 32000
 SET LINESIZE 32000
@@ -4522,54 +4526,54 @@ SELECT * FROM dflt_question_restricts WHERE dqr_slc_code IN ('AACC','ACCH','ARKH
 DELETE FROM dflt_question_restricts WHERE dqr_slc_code IN ('AACC','ACCH','ARKH','DASH','FRED','HELP','IDAA','KICH','MEHC','NORS','PORT','SOUH','WAIS','WESC','PEAC','ISHA', 'UNIS');
 SELECT * FROM dflt_question_restricts WHERE dqr_que_refno IN (199, 209, 215, 224, 226, 228, 236, 246, 252, 269, 276, 285, 300, 302, 295);
 DELETE FROM dflt_question_restricts WHERE dqr_que_refno IN (199, 209, 215, 224, 226, 228, 236, 246, 252, 269, 276, 285, 300, 302, 295);
-
+spoo off
 SPOO op_squ_vals.log
 SET LONG 32000
 SET LINESIZE 32000
 SELECT * FROM scheme_questions WHERE squ_que_refno IN (199, 209, 215, 224, 226, 228, 236, 246, 252, 269, 276, 285, 300, 302, 238, 271, 295);
 DELETE FROM scheme_questions WHERE squ_que_refno IN (199, 209, 215, 224, 226, 228, 236, 246, 252, 269, 276, 285, 300, 302, 238, 271, 295);
-
+spoo off
 SPOO op_que_vals.log
 SET LONG 32000
 SET LINESIZE 32000
 SELECT * FROM questions WHERE que_refno IN (199, 209, 215, 224, 226, 228, 236, 246, 252, 269, 276, 285, 300, 302, 238, 271, 295);
 DELETE FROM questions WHERE que_refno IN (199, 209, 215, 224, 226, 228, 236, 246, 252, 269, 276, 285, 300, 302, 238, 271, 295);
-
+spoo off
 SPOO op_slc_vals.log
 SET LONG 32000
 SET LINESIZE 32000
 SELECT * FROM short_lists WHERE sli_slc_code IN ('AACC','ACCH','ARKH','DASH','FRED','HELP','IDAA','KICH','MEHC','NORS','PORT','SOUH','WAIS','WESC','PEAC','ISHA', 'UNIS');
 DELETE FROM short_lists WHERE sli_slc_code IN ('AACC','ACCH','ARKH','DASH','FRED','HELP','IDAA','KICH','MEHC','NORS','PORT','SOUH','WAIS','WESC','PEAC','ISHA', 'UNIS');
-
+spoo off
 SPOO op_spl_vals.log
 SET LONG 32000
 SET LINESIZE 32000
 SELECT * FROM slist_alloc_prop_lists WHERE spl_slc_code IN ('AACC','ACCH','ARKH','DASH','FRED','HELP','IDAA','KICH','MEHC','NORS','PORT','SOUH','WAIS','WESC','PEAC','ISHA', 'UNIS') ;
 DELETE FROM slist_alloc_prop_lists WHERE spl_slc_code IN ('AACC','ACCH','ARKH','DASH','FRED','HELP','IDAA','KICH','MEHC','NORS','PORT','SOUH','WAIS','WESC','PEAC','ISHA', 'UNIS') ;
-
+spoo off
 SPOO op_dqr_vals.log APPEND
 SET LONG 32000
 SET LINESIZE 32000
 SELECT * FROM dflt_question_restricts WHERE dqr_slc_code IN ('AACC','ACCH','ARKH','DASH','FRED','HELP','IDAA','KICH','MEHC','NORS','PORT','SOUH','WAIS','WESC','PEAC','ISHA', 'UNIS');
 DELETE FROM dflt_question_restricts WHERE dqr_slc_code IN ('AACC','ACCH','ARKH','DASH','FRED','HELP','IDAA','KICH','MEHC','NORS','PORT','SOUH','WAIS','WESC','PEAC','ISHA', 'UNIS');
-
+spoo off
 SPOO op_scg_vals.log
 SET LONG 32000
 SET LINESIZE 32000
 SELECT * FROM slist_cat_appl_cat WHERE scg_slc_code IN ('AACC','ACCH','ARKH','DASH','FRED','HELP','IDAA','KICH','MEHC','NORS','PORT','SOUH','WAIS','WESC','PEAC','ISHA', 'UNIS');
 DELETE FROM slist_cat_appl_cat WHERE scg_slc_code IN ('AACC','ACCH','ARKH','DASH','FRED','HELP','IDAA','KICH','MEHC','NORS','PORT','SOUH','WAIS','WESC','PEAC','ISHA', 'UNIS');
-
+spoo off
 SPOO op_srp_vals.log
 SET LONG 32000
 SET LINESIZE 32000
 DELETE FROM slist_cat_rehousing_policies WHERE srp_slc_code IN ('AACC','ACCH','ARKH','DASH','FRED','HELP','IDAA','KICH','MEHC','NORS','PORT','SOUH','WAIS','WESC','PEAC','ISHA','UNIS');
-
+spoo off
 SPOO op_slc_vals.log
 SET LONG 32000
 SET LINESIZE 32000
 SELECT * FROM slist_categories WHERE slc_code IN ('AACC','ACCH','ARKH','DASH','FRED','HELP','IDAA','KICH','MEHC','NORS','PORT','SOUH','WAIS','WESC','PEAC','ISHA','UNIS');
 DELETE FROM slist_categories WHERE slc_code IN ('AACC','ACCH','ARKH','DASH','FRED','HELP','IDAA','KICH','MEHC','NORS','PORT','SOUH','WAIS','WESC','PEAC','ISHA','UNIS');
-
+spoo off
 SPOO op_config_install.log APPEND
 SET LONG 32000
 SET LINESIZE 32000
@@ -4844,11 +4848,12 @@ exec cre_nto('PRO','PROJECT');
 exec cre_nto('APP','SHP');
 
 REM INSERTING into SLIST_CAT_REHOUSING_POLICIES
+spoo off
 SPOO op_srp_vals.log APPEND
 
 SELECT * FROM slist_cat_rehousing_policies;
 DELETE FROM slist_cat_rehousing_policies;
-
+spoo off
 SPOO op_config_install.log APPEND
 exec cre_srp(2,'ACC2');
 exec cre_srp(2,'ANGS');
@@ -5029,13 +5034,13 @@ USING (SELECT dqr_seqno,
     VSTS 45466 REJ Rejection reason should be retired
 
 */
-
+spoo off
 SPOO op_rra_vals.log
 SET LONG 32000
 SET LINESIZE 32000
 SELECT * FROM rejection_reasons WHERE rra_code = 'REJ';
 DELETE FROM rejection_reasons WHERE rra_code = 'REJ';
-
+spoo off
 SPOO op_config_install.log APPEND
 SET LONG 32000
 SET LINESIZE 32000
@@ -5076,7 +5081,7 @@ UPDATE hidden_field_job_roles
     VSTS 45606 NGO PORTAL - Missing Application questions
 
 */
-
+spoo off
 SPOO op_squ_vals.log APPEND
 SET LONG 32000
 SET LINESIZE 32000
@@ -5085,7 +5090,7 @@ DELETE FROM scheme_questions WHERE squ_que_refno = 373 AND SQU_HRV_PRS_CODE = 'P
 exec cre_squ('PSCOOP',960,'SHR','HR',15,'Y',180,957,'N');
 exec cre_squ('PSCOOP',965,'SHR','HR',15,'Y',190,961,'N');
 exec cre_squ('PSCOOP',969,'SHR','HR',15,'N',200,966,'N');
-
+spoo off
 SPOO op_config_install.log APPEND
 SET LONG 32000
 SET LINESIZE 32000
@@ -5296,7 +5301,7 @@ UPDATE questions SET QUE_SUMMARY_DESCRIPTION ='Eligible for GEN', QUE_QUESTION_D
 UPDATE questions SET QUE_SUMMARY_DESCRIPTION ='Category - GEN', QUE_QUESTION_DESCRIPTION='Category - GEN' WHERE que_refno in (876);
 UPDATE questions SET QUE_SUMMARY_DESCRIPTION ='Category - COOP', QUE_QUESTION_DESCRIPTION='Category - COOP' WHERE que_refno in (778);
 
-
+spoo off
 SPOO op_squ_vals.log APPEND
 SET LONG 32000
 SET LINESIZE 32000
@@ -5311,7 +5316,7 @@ DELETE FROM scheme_questions WHERE squ_que_refno in (773, 619, 876, 890, 1156, 1
 
 SELECT * FROM scheme_questions WHERE squ_que_refno in (901,916);
 DELETE FROM scheme_questions WHERE squ_que_refno in (901,916);
-
+spoo off
 SPOO op_config_install.log APPEND
 exec cre_squ('PSCHP',588,'FILT','DQ',90,'N',1810,3150,'N');
 exec cre_squ('PSCHP',604,'FILT','DQ',90,'N',1840,3160,'N');
@@ -6104,19 +6109,19 @@ exec cre_hid('HSS-ASM-SP',38,'FIELD_HIDE');
 
 */
 UPDATE HHOLD_TYPE_ELIG_SCHEMES SET HHTS_HEG_CODE = 'INEL' WHERE hhts_hty_code = 'INELIGIBLE' AND HHTS_HRV_ELS_CODE = 'ESAB';
-
+spoo off
 SPOO op_egr_vals.log
 SET LONG 32000
 SET LINESIZE 32000
 SELECT * FROM ELIG_GROUP_RULE_QUESTIONS WHERE egr_heg_code like '%AB%';
 DELETE FROM ELIG_GROUP_RULE_QUESTIONS WHERE egr_heg_code like '%AB%';
-
+spoo off
 SPOO op_heg_vals.log
 SET LONG 32000
 SET LINESIZE 32000
 SELECT * FROM HHOLD_ELIG_GROUP_RULES WHERE heg_code like '%AB';
 DELETE FROM HHOLD_ELIG_GROUP_RULES WHERE heg_code like '%AB';
-
+spoo off
 SPOO op_config_install.log APPEND
 SET LONG 32000
 SET LINESIZE 32000
@@ -6147,12 +6152,12 @@ USING (SELECT opt_refno optj_opt_refno,
 */
 exec create_question(347,'DNQ','D','DQ','DQ','N','N','N','N','N','Y','N','N',221,2601,'70','Category Start Date - CHP','Category Start Date - CHP','N',null);
 exec cre_squ('PSCHP',347,'DQ','DQ',70,'N',221,2601,'N');
-
+spoo off
 SPOO op_squ_vals.log APPEND
 SET LONG 32000
 SET LINESIZE 32000
 DELETE FROM scheme_questions WHERE SQU_HRV_PRS_CODE = 'PSCHP' AND SQU_QUE_REFNO = 890;
-
+spoo off
 SPOO op_config_install.log APPEND
 exec cre_dqh(167,'Category Start Date - CHP','D');
 exec cre_dqd(167,1,'SELECT S_USR_DQS_HAT.HAT_DQ_SQL(''CATSTARTDATECHP'', app_refno) FROM applications WHERE app_refno = &app_refno');
@@ -6181,13 +6186,13 @@ exec cre_dqd(169,1,'SELECT S_USR_DQS_HAT.HAT_DQ_SQL(''ELIGMX'', app_refno) FROM 
 exec cre_dqd(170,1,'SELECT S_USR_DQS_HAT.HAT_DQ_SQL(''ELIGTR'', app_refno) FROM applications WHERE app_refno = &app_refno');
 
 REM INSERTING into DERIVED_QUESTION_USGES
-
+spoo off
 SPOO op_dqu_vals.log APPEND
 SET LONG 32000
 SET LINESIZE 32000
 SELECT * FROM derived_question_usages WHERE dqu_que_refno in (417,432,437);
 DELETE FROM derived_question_usages WHERE dqu_que_refno in (417,432,437);
-
+spoo off
 SPOO op_config_install.log APPEND
 exec cre_derived_question_usage(168,417,null);
 exec cre_derived_question_usage(169,432,null);
@@ -6197,7 +6202,7 @@ exec cre_derived_question_usage(170,437,null);
     Fix up organisation admin units
 
 */
-
+spoo off
 SPOO op_orau_vals.log
 SET LONG 32000
 SET LINESIZE 32000
@@ -6214,7 +6219,7 @@ DELETE FROM organisation_admin_units
    AND orau_par_refno = (SELECT par_refno 
                            FROM organisations 
                           WHERE PAR_ORG_SHORT_NAME = 'YOURPL');
-
+spoo off
 SPOO op_config_install.log APPEND
 
 select 'End Time = '||to_char(sysdate, 'hh24:mi:ss') from dual;

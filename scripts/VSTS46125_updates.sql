@@ -178,32 +178,29 @@ USING (SELECT ale_app_refno app_refno,
 -----------------------------------------------------------------------------------   
             
 exec assign_current_ipa_aun('CHCRREG61794', 'AMELIEOFF');
-exec assign_current_ipa_aun('CHCRREG60346', 'AMELIEOFF');
+exec assign_current_ipa_aun('CHCRREG60404', 'AMELIEOFF');
 exec assign_current_ipa_aun('CHCRREG70459', 'CORSTOOFF');
+exec assign_current_ipa_aun('CHCRREG60346', 'AMELIEOFF');
 exec assign_current_ipa_aun('CHCRREG99588', 'ANGSAHOFF');
+exec assign_current_ipa_aun('CHCRREG62145', 'AMELIEOFF');
+exec assign_current_ipa_aun('CHCRREG59002', 'UNITSAOFF');
 exec assign_current_ipa_aun('CHCRREG102985', 'ANGSAHOFF');
 exec assign_current_ipa_aun('CHCRREG66492', 'UNICOUOFF');
-exec assign_current_ipa_aun('CHCRREG97235', 'UNITYOFF');
-exec assign_current_ipa_aun('CHCRREG103311', 'ANGSAHOFF');
-exec assign_current_ipa_aun('CHCRREG60895', 'ADE6301');
-exec assign_current_ipa_aun('CHCRREG63703', 'CORSTOOFF');
-exec assign_current_ipa_aun('CHCRREG59002', 'UNITSAOFF');
-exec assign_current_ipa_aun('CHCRREG114403', 'UNITSAOFF');
-exec assign_current_ipa_aun('CHCRREG62145', 'AMELIEOFF');
-exec assign_current_ipa_aun('CHCRREG64848', 'CORSTOOFF');
-exec assign_current_ipa_aun('CHCRREG60993', 'AMELIEOFF');
-exec assign_current_ipa_aun('CHCRREG61617', 'ANGSAHOFF');
-exec assign_current_ipa_aun('CHCRREG85768', 'ACC2PLCOFF');
-exec assign_current_ipa_aun('CHCRREG64725', 'CORSTOOFF');
-exec assign_current_ipa_aun('CHCRREG64370', 'SALVOHOFF');
-exec assign_current_ipa_aun('CHCRREG104646', 'ANGSAHOFF');
-exec assign_current_ipa_aun('CHCRREG63870', 'CORSTOOFF');
-exec assign_current_ipa_aun('CHCRREG63595', 'ADE6301');
-exec assign_current_ipa_aun('CHCRREG97562', 'UNITSAOFF');
 exec assign_current_ipa_aun('CHCRREG105857', 'UNITYOFF');
+exec assign_current_ipa_aun('CHCRREG97235', 'UNITYOFF');
 exec assign_current_ipa_aun('CHCRREG97427', 'COMHOUOFF');
+exec assign_current_ipa_aun('CHCRREG103311', 'ANGSAHOFF');
+exec assign_current_ipa_aun('CHCRREG63703', 'CORSTOOFF');
+exec assign_current_ipa_aun('CHCRREG60993', 'AMELIEOFF');
+exec assign_current_ipa_aun('CHCRREG64848', 'CORSTOOFF');
+exec assign_current_ipa_aun('CHCRREG85768', 'ACC2PLCOFF');
 exec assign_current_ipa_aun('CHCRREG97698', 'COMHOUOFF');
-
+exec assign_current_ipa_aun('CHCRREG64725', 'CORSTOOFF');
+exec assign_current_ipa_aun('CHCRREG61617', 'ANGSAHOFF');
+exec assign_current_ipa_aun('CHCRREG64370', 'SALVOHOFF');
+exec assign_current_ipa_aun('CHCRREG63870', 'CORSTOOFF');
+exec assign_current_ipa_aun('CHCRREG97562', 'UNITSAOFF');
+exec assign_current_ipa_aun('CHCRREG104646', 'ANGSAHOFF');
 
 
 -----------------------------------------------------------------------------------   
